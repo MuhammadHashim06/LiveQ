@@ -115,7 +115,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Calendar, Search, User, Clock, Video, LogOut } from "lucide-react"
 
 const navItems = [
@@ -128,15 +128,26 @@ const navItems = [
 
 export default function CustomerLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" })
+      router.push("/login")
+    } catch (error) {
+      console.error("Logout failed:", error)
+      router.push("/login")
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Sticky Top Navbar */}
       <header className="sticky top-0 z-50 bg-white shadow-md px-8 py-3 rounded-b-xl mx-4 mt-4 flex items-center justify-between backdrop-blur-md border border-gray-200">
         {/* Left: Logo */}
-       <Link href="/dashboard/customer" className="text-xl font-bold text-gray-800">
-  Live<span className="text-red-600">Q</span>
-</Link>
+        <Link href="/dashboard/customer" className="text-xl font-bold text-gray-800">
+          Live<span className="text-red-600">Q</span>
+        </Link>
 
         {/* Center: Nav Items */}
         <nav className="flex space-x-6">
@@ -146,11 +157,10 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
               <Link
                 key={href}
                 href={href}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium transition ${
-                  isActive
-                    ? "bg-blue-100 text-blue-800"
-                    : "text-gray-700 hover:bg-gray-100"
-                }`}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium transition ${isActive
+                  ? "bg-red-50 text-red-700"
+                  : "text-gray-700 hover:bg-gray-100"
+                  }`}
               >
                 <Icon className="h-4 w-4" />
                 <span>{label}</span>
@@ -160,13 +170,13 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
         </nav>
 
         {/* Right: Logout */}
-        <Link
-          href="/login"
+        <button
+          onClick={handleLogout}
           className="flex items-center gap-2 bg-red-600 text-white px-3 py-1.5 rounded-md hover:bg-red-700 transition text-sm"
         >
           <LogOut className="h-4 w-4" />
           Logout
-        </Link>
+        </button>
       </header>
 
       {/* Main Content */}

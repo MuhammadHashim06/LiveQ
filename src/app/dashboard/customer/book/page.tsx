@@ -45,50 +45,55 @@ export default function BookAppointmentPage() {
   return (
     <>
       <div className="max-w-xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">Book Appointment</h1>
-        {message && <p className="mb-4 text-sm text-blue-600">{message}</p>}
-        
-        <label className="block mb-2 font-medium">Select Business</label>
+        <h1 className="text-3xl font-bold mb-6 text-gray-900 text-center">Book Appointment</h1>
+        {message && <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-xl text-center font-medium border border-red-100">{message}</div>}
+
+        <label className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">Select Business</label>
         <select
-          className="w-full border px-4 py-2 mb-4 rounded"
+          className="w-full border border-gray-200 px-4 py-3 mb-6 rounded-xl focus:ring-4 focus:ring-red-500/10 focus:border-red-500 outline-none transition-all appearance-none cursor-pointer"
           value={selectedBusiness}
           onChange={(e) => setSelectedBusiness(e.target.value)}
         >
-          <option value="">-- Choose --</option>
+          <option value="">-- Choose Business --</option>
           {businesses.map((b) => (
             <option key={b._id} value={b._id}>{b.name}</option>
           ))}
         </select>
 
-        <label className="block mb-2 font-medium">Service</label>
+        <label className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">Service</label>
         <input
-          className="w-full border px-4 py-2 mb-4 rounded"
+          className="w-full border border-gray-200 px-4 py-3 mb-6 rounded-xl focus:ring-4 focus:ring-red-500/10 focus:border-red-500 outline-none transition-all placeholder:text-gray-400"
           placeholder="e.g. Haircut, Dental Checkup"
           value={service}
           onChange={(e) => setService(e.target.value)}
         />
 
-        <label className="block mb-2 font-medium">Date</label>
-        <input
-          type="date"
-          className="w-full border px-4 py-2 mb-4 rounded"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-        />
-
-        <label className="block mb-2 font-medium">Time</label>
-        <input
-          type="time"
-          className="w-full border px-4 py-2 mb-4 rounded"
-          value={time}
-          onChange={(e) => setTime(e.target.value)}
-        />
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">Date</label>
+            <input
+              type="date"
+              className="w-full border border-gray-200 px-4 py-3 mb-6 rounded-xl focus:ring-4 focus:ring-red-500/10 focus:border-red-500 outline-none transition-all"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">Time</label>
+            <input
+              type="time"
+              className="w-full border border-gray-200 px-4 py-3 mb-6 rounded-xl focus:ring-4 focus:ring-red-500/10 focus:border-red-500 outline-none transition-all"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+            />
+          </div>
+        </div>
 
         <button
           onClick={handleBooking}
-          className="mt-4 px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          className="w-full bg-red-600 text-white font-bold py-3 rounded-xl hover:bg-red-700 transition shadow-lg shadow-red-200"
         >
-          Book Now
+          Confirm Appointment
         </button>
       </div>
     </>
