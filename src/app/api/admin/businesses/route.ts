@@ -2,11 +2,10 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Business from "@/models/Business";
 import { cookies } from "next/headers";
-import { jwtVerify } from "jose";
-
+import jwt from "jsonwebtoken";
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
-export async function GET(req: Request) {
+export async function GET() {
     try {
         console.log("Admin Businesses API called");
         await dbConnect();
@@ -19,8 +18,7 @@ export async function GET(req: Request) {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
         }
 
-        const secret = new TextEncoder().encode(JWT_SECRET);
-        const { payload } = await jwtVerify(token, secret);
+        const payload = jwt.verify(token, JWT_SECRET) as jwt.JwtPayload;
 
         console.log("Token verified. Role:", payload.role);
 

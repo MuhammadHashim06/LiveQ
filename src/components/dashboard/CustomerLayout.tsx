@@ -117,6 +117,7 @@
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { Calendar, Search, User, Clock, Video, LogOut } from "lucide-react"
+import NotificationBell from './NotificationBell'
 
 const navItems = [
   { label: "Book", href: "/dashboard/customer/book", icon: Calendar },
@@ -169,14 +170,17 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
           })}
         </nav>
 
-        {/* Right: Logout */}
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-2 bg-red-600 text-white px-3 py-1.5 rounded-md hover:bg-red-700 transition text-sm"
-        >
-          <LogOut className="h-4 w-4" />
-          Logout
-        </button>
+        {/* Right: Notifications & Logout */}
+        <div className="flex items-center gap-4">
+          <NotificationBell />
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 bg-red-600 text-white px-3 py-1.5 rounded-md hover:bg-red-700 transition text-sm"
+          >
+            <LogOut className="h-4 w-4" />
+            Logout
+          </button>
+        </div>
       </header>
 
       {/* Main Content */}

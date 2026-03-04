@@ -2,28 +2,28 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Appointment from "@/models/Appointment";
 import Business from "@/models/Business";
-import { headers } from "next/headers";
-import { jwtVerify } from "jose";
+import Notification from "@/models/Notification";
+import { getUser } from "@/lib/auth";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
-
+// GET: Fetch appointments for the logged-in business owner
 export async function GET(req: Request) {
     try {
         await dbConnect();
-        const token = (await headers()).get("cookie")?.split("token=")[1]?.split(";")[0];
-        if (!token) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
-        const secret = new TextEncoder().encode(JWT_SECRET);
-        const { payload } = await jwtVerify(token, secret);
+        const user = await getUser();
+        if (!user) {
+            return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+        }
 
-        // Find business owned by this user
-        const business = await Business.findOne({ owner: payload.id });
-        if (!business) return NextResponse.json({ message: "Business not found" }, { status: 404 });
+        const business = await Business.findOne({ owner: user.id });
+        if (!business) {
+            return NextResponse.json({ message: "Business not found" }, { status: 404 });
+        }
 
-        // Get appointments for this business
         const appointments = await Appointment.find({ business: business._id })
-            .populate("user", "name email")
-            .sort({ scheduledTime: 1 });
+            .populate('user', 'name email')
+            .sort({ scheduledTime: 1 }) // Sort by upcoming
+            .lean();
 
         return NextResponse.json(appointments);
     } catch (error: any) {
@@ -31,17 +31,51 @@ export async function GET(req: Request) {
     }
 }
 
-// Update appointment status
+// PATCH: Update an appointment's status
 export async function PATCH(req: Request) {
     try {
         await dbConnect();
+
+        const user = await getUser();
+        if (!user) {
+            return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+        }
+
+        // Technically, we should verify that this business owner truly owns the appointment they are modifying.
+        const business = await Business.findOne({ owner: user.id });
+        if (!business) {
+            return NextResponse.json({ message: "Business not found" }, { status: 404 });
+        }
+
         const { appointmentId, status } = await req.json();
 
-        const appointment = await Appointment.findByIdAndUpdate(
-            appointmentId,
-            { status },
+        if (!appointmentId || !status) {
+            return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
+        }
+
+        const appointment = await Appointment.findOneAndUpdate(
+            { _id: appointmentId, business: business._id },
+            { $set: { status } },
             { new: true }
-        );
+        ).populate('user', 'name');
+
+        if (!appointment) {
+            return NextResponse.json({ message: "Appointment not found" }, { status: 404 });
+        }
+
+        // Trigger Notification if confirmed or cancelled
+        if (['confirmed', 'cancelled', 'completed'].includes(status) && appointment.user) {
+            let msg = `Your appointment for ${appointment.serviceName} has been ${status}.`;
+            if (status === 'confirmed') msg = `Your appointment for ${appointment.serviceName} is confirmed for ${new Date(appointment.scheduledTime).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}.`;
+
+            await Notification.create({
+                recipient: appointment.user._id,
+                type: "queue_update",
+                title: `Appointment ${status.charAt(0).toUpperCase() + status.slice(1)}`,
+                message: msg,
+                link: "/dashboard/customer/appointments"
+            });
+        }
 
         return NextResponse.json(appointment);
     } catch (error: any) {

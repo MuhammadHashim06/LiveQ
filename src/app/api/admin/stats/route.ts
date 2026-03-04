@@ -4,8 +4,7 @@ import User from "@/models/User";
 import Business from "@/models/Business";
 import Appointment from "@/models/Appointment";
 import { cookies } from "next/headers";
-import { jwtVerify } from "jose";
-
+import jwt from "jsonwebtoken";
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
 export async function GET(req: Request) {
@@ -16,8 +15,7 @@ export async function GET(req: Request) {
         const token = cookieStore.get("token")?.value;
         if (!token) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
-        const secret = new TextEncoder().encode(JWT_SECRET);
-        const { payload } = await jwtVerify(token, secret);
+        const payload = jwt.verify(token, JWT_SECRET) as any;
 
         if (payload.role !== "admin") {
             return NextResponse.json({ message: "Forbidden" }, { status: 403 });

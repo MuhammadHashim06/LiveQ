@@ -53,8 +53,8 @@ const BusinessSchema: Schema = new Schema(
     category: { type: String, default: "General" },
     services: [ServiceSchema],
     availability: [AvailabilitySchema],
-    lat: { type: Number, required: true },
-    lng: { type: Number, required: true },
+    lat: { type: Number, default: 0 },
+    lng: { type: Number, default: 0 },
     stats: {
       totalCustomers: { type: Number, default: 0 },
       rating: { type: Number, default: 0 }

@@ -86,6 +86,7 @@ import {
   Settings,
   ClipboardList,
 } from "lucide-react"
+import NotificationBell from './NotificationBell'
 
 const navItems = [
   { label: "Queue", href: "/dashboard/business/queue", icon: Users },
@@ -128,8 +129,8 @@ export default function BusinessLayout({ children }: { children: React.ReactNode
                 key={href}
                 href={href}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition ${isActive
-                    ? "bg-gray-700 text-white"
-                    : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                  ? "bg-gray-700 text-white"
+                  : "text-gray-300 hover:bg-gray-800 hover:text-white"
                   }`}
               >
                 <Icon className="h-4 w-4" />
@@ -139,14 +140,19 @@ export default function BusinessLayout({ children }: { children: React.ReactNode
           })}
         </nav>
 
-        {/* Right: Logout */}
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-2 px-4 py-1.5 rounded-md text-sm font-medium bg-red-600 hover:bg-red-700 transition"
-        >
-          <LogOut className="h-4 w-4" />
-          Logout
-        </button>
+        {/* Right: Notifications & Logout */}
+        <div className="flex items-center gap-4">
+          <div className="text-gray-300">
+            <NotificationBell />
+          </div>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 px-4 py-1.5 rounded-md text-sm font-medium bg-red-600 hover:bg-red-700 transition"
+          >
+            <LogOut className="h-4 w-4" />
+            Logout
+          </button>
+        </div>
       </header>
 
       {/* Main Content */}

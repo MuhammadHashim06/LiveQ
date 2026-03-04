@@ -1,5 +1,4 @@
 'use client'
-import CustomerLayout from "@/components/dashboard/CustomerLayout"
 
 export default function EntertainmentPage() {
   return (

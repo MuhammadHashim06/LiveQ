@@ -7,6 +7,7 @@ export interface IQueue extends Document {
   status: "waiting" | "serving" | "completed" | "removed" | "cancelled";
   joinedAt: Date;
   estimatedServiceTime?: Date;
+  sortOrder: number;
 }
 
 const QueueSchema: Schema = new Schema(
@@ -20,7 +21,8 @@ const QueueSchema: Schema = new Schema(
       default: "waiting"
     },
     joinedAt: { type: Date, default: Date.now },
-    estimatedServiceTime: { type: Date }
+    estimatedServiceTime: { type: Date },
+    sortOrder: { type: Number, default: Date.now } // fallback initially to timestamp
   },
   { timestamps: true }
 )

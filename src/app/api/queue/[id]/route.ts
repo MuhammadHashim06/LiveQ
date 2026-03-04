@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Queue from "@/models/Queue";
+import NotificationModel from "@/models/Notification";
 import { headers } from "next/headers";
-import { jwtVerify } from "jose";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
@@ -19,7 +19,17 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             id,
             { status },
             { new: true }
-        );
+        ).populate('business', 'name');
+
+        if (updatedQueue && updatedQueue.user && status === 'serving') {
+            await NotificationModel.create({
+                recipient: updatedQueue.user,
+                type: 'queue_update',
+                title: "It's your turn!",
+                message: `The business ${updatedQueue.business?.name || ''} is ready to serve you.`,
+                link: `/dashboard/customer/appointments`
+            });
+        }
 
         return NextResponse.json(updatedQueue);
     } catch (error: any) {

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Business from "@/models/Business";
-import { headers } from "next/headers";
-import { jwtVerify } from "jose";
+import { cookies } from "next/headers";
+import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
@@ -30,11 +30,11 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
     try {
         await dbConnect();
-        const token = (await headers()).get("cookie")?.split("token=")[1]?.split(";")[0];
+        const cookieStore = await cookies();
+        const token = cookieStore.get("token")?.value;
 
         if (!token) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-        const secret = new TextEncoder().encode(JWT_SECRET);
-        const { payload } = await jwtVerify(token, secret);
+        const payload = jwt.verify(token, JWT_SECRET) as any;
 
         const body = await req.json();
 

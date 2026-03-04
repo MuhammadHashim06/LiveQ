@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Queue from "@/models/Queue";
 import Business from "@/models/Business";
-import { headers } from "next/headers";
-import { jwtVerify } from "jose";
+import { cookies } from "next/headers";
+import jwt from "jsonwebtoken";
+import Notification from "@/models/Notification";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
@@ -11,11 +12,11 @@ const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 export async function GET(req: Request) {
     try {
         await dbConnect();
-        const token = (await headers()).get("cookie")?.split("token=")[1]?.split(";")[0];
+        const cookieStore = await cookies();
+        const token = cookieStore.get("token")?.value;
         if (!token) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
-        const secret = new TextEncoder().encode(JWT_SECRET);
-        const { payload } = await jwtVerify(token, secret);
+        const payload = jwt.verify(token, JWT_SECRET) as any;
 
         const business = await Business.findOne({ owner: payload.id });
         if (!business) return NextResponse.json({ message: "Business not found" }, { status: 404 });
@@ -23,7 +24,7 @@ export async function GET(req: Request) {
         const queue = await Queue.find({
             business: business._id,
             status: { $in: ["waiting", "serving"] } // Only active queue
-        }).sort({ joinedAt: 1 });
+        }).sort({ sortOrder: 1, joinedAt: 1 });
 
         return NextResponse.json(queue);
     } catch (error: any) {
@@ -35,11 +36,11 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
     try {
         await dbConnect();
-        const token = (await headers()).get("cookie")?.split("token=")[1]?.split(";")[0];
+        const cookieStore = await cookies();
+        const token = cookieStore.get("token")?.value;
         if (!token) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
-        const secret = new TextEncoder().encode(JWT_SECRET);
-        const { payload } = await jwtVerify(token, secret);
+        const payload = jwt.verify(token, JWT_SECRET) as any;
 
         const business = await Business.findOne({ owner: payload.id });
         if (!business) return NextResponse.json({ message: "Business not found" }, { status: 404 });
@@ -51,7 +52,15 @@ export async function POST(req: Request) {
             name: name || "Walk-in Customer",
             status: "waiting",
             joinedAt: new Date(),
-            // notes could be added to schema if needed
+        });
+
+        // Create a system notification for the business owner as a paper trail (Optional, but good practice)
+        await Notification.create({
+            recipient: business.owner,
+            type: 'system',
+            title: 'Manual Entry',
+            message: `You manually added ${newQueueItem.name} to the queue.`,
+            link: '/dashboard/business/queue'
         });
 
         return NextResponse.json(newQueueItem, { status: 201 });
