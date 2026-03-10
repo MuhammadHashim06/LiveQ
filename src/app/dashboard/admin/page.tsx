@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Users, Building2, Calendar, TrendingUp, ArrowUpRight, ArrowDownRight, Activity } from "lucide-react"
 
 export default function AdminOverview() {
-    const [stats, setStats] = useState({ users: 0, businesses: 0, todayAppointments: 0, growth: 0 })
+    const [stats, setStats] = useState<any>({ users: 0, businesses: 0, todayAppointments: 0, growth: 0, recentActivity: [] })
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
@@ -103,20 +103,32 @@ export default function AdminOverview() {
                         <button className="text-xs font-bold text-red-600 hover:text-red-700 uppercase tracking-widest">View All</button>
                     </div>
                     <div className="flex-grow">
-                        {[1, 2, 3, 4, 5].map((_, i) => (
-                            <div key={i} className="p-5 flex items-center justify-between border-b border-gray-50 hover:bg-gray-50/50 transition-colors last:border-0 group">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-red-50 group-hover:text-red-600 transition-colors">
-                                        <Building2 className="w-5 h-5" />
+                        {stats.recentActivity && stats.recentActivity.length > 0 ? (
+                            stats.recentActivity.map((activity: any) => (
+                                <div key={activity.id} className="p-5 flex items-center justify-between border-b border-gray-50 hover:bg-gray-50/50 transition-colors last:border-0 group">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-red-50 group-hover:text-red-600 transition-colors">
+                                            <Building2 className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-bold text-gray-900">{activity.title}</p>
+                                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter mt-0.5">
+                                                {new Date(activity.date).toLocaleString()} • {activity.status}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="text-sm font-bold text-gray-900">New business registered: "Starbucks Coffee"</p>
-                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter mt-0.5">2 minutes ago • verification pending</p>
-                                    </div>
+                                    {activity.status === 'pending' ? (
+                                        <div className="px-3 py-1 bg-yellow-50 text-yellow-700 text-[10px] font-black uppercase rounded-lg">Pending</div>
+                                    ) : (
+                                        <div className="px-3 py-1 bg-green-50 text-green-700 text-[10px] font-black uppercase rounded-lg">Verified</div>
+                                    )}
                                 </div>
-                                <div className="px-3 py-1 bg-yellow-50 text-yellow-700 text-[10px] font-black uppercase rounded-lg">Pending</div>
+                            ))
+                        ) : (
+                            <div className="p-10 text-center text-gray-500 font-medium text-sm">
+                                No recent activity found.
                             </div>
-                        ))}
+                        )}
                     </div>
                 </div>
 

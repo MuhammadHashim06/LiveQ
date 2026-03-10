@@ -3,7 +3,15 @@ import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
-export async function getUser() {
+export interface DecodedUser {
+    id: string;
+    role: string;
+    name: string;
+    email: string;
+    isEmailVerified?: boolean;
+}
+
+export async function getUser(): Promise<DecodedUser | null> {
     const token = (await cookies()).get("token")?.value;
     if (!token) return null;
 

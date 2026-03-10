@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
-import { Clock, CheckCircle2, XCircle, Building2, MapPin, Users } from 'lucide-react'
+import { Clock, CheckCircle2, XCircle, Building2, MapPin, Users, Star } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Link from 'next/link'
 
@@ -39,6 +39,14 @@ export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState<AppointmentItem[]>([])
   const [loadingQueues, setLoadingQueues] = useState(true)
   const [loadingAppts, setLoadingAppts] = useState(true)
+
+  const [reviewModalOpen, setReviewModalOpen] = useState(false)
+  const [selectedBusiness, setSelectedBusiness] = useState<{ id: string, name: string } | null>(null)
+  const [rating, setRating] = useState(0)
+  const [comment, setComment] = useState("")
+  const [submittingReview, setSubmittingReview] = useState(false)
+
+  const [reviewedBusinessIds, setReviewedBusinessIds] = useState<Set<string>>(new Set())
 
   const prevQueuesRef = useRef<QueueItem[]>([])
   const isFirstLoad = useRef(true)
@@ -113,9 +121,60 @@ export default function AppointmentsPage() {
     }
   }
 
+  const openReviewModal = (businessId: string, businessName: string) => {
+    if (!businessId) return;
+    setSelectedBusiness({ id: businessId, name: businessName })
+    setRating(0)
+    setComment("")
+    setReviewModalOpen(true)
+  }
+
+  const submitReview = async () => {
+    if (!selectedBusiness) return;
+    if (rating === 0) {
+      toast.error("Please select a rating");
+      return;
+    }
+
+    setSubmittingReview(true);
+    try {
+      const res = await fetch("/api/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          businessId: selectedBusiness.id,
+          rating,
+          comment
+        })
+      });
+      if (res.ok) {
+        toast.success(reviewedBusinessIds.has(selectedBusiness.id) ? "Review updated!" : "Review submitted successfully!");
+        setReviewedBusinessIds(prev => new Set(prev).add(selectedBusiness.id))
+        setReviewModalOpen(false);
+      } else {
+        const data = await res.json();
+        toast.error(data.message || "Failed to submit review");
+      }
+    } catch {
+      toast.error("Network error");
+    } finally {
+      setSubmittingReview(false);
+    }
+  }
+
   useEffect(() => {
     fetchQueues()
     fetchAppointments()
+
+    // Fetch already reviewed businesses to pre-populate the reviewed set
+    fetch('/api/reviews?userId=me').then(async (res) => {
+      if (res.ok) {
+        const data = await res.json()
+        if (Array.isArray(data) && data.length > 0) {
+          setReviewedBusinessIds(new Set(data.map((r: any) => r.business?._id?.toString() || r.business?.toString())))
+        }
+      }
+    }).catch(() => { })
 
     const interval = setInterval(() => {
       fetchQueues()
@@ -132,7 +191,7 @@ export default function AppointmentsPage() {
     // We can just hit a generic update or create one specifically if missing.
     try {
       const res = await fetch(`/api/queue/${queueId}`, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'cancelled' })
       });
@@ -276,7 +335,7 @@ export default function AppointmentsPage() {
 
           {upcomingAppts.length === 0 ? (
             <div className="bg-white p-6 rounded-2xl border border-gray-200 text-center shadow-sm">
-              <p className="text-gray-500">You don't have any upcoming appointments.</p>
+              <p className="text-gray-500">You don&apos;t have any upcoming appointments.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -313,7 +372,7 @@ export default function AppointmentsPage() {
                           onClick={() => handleEarlyArrival(a._id)}
                           className="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold py-2 rounded-xl text-sm transition-colors border border-blue-200"
                         >
-                          I'm Here Early
+                          I&apos;m Here Early
                         </button>
                       )}
                     </div>
@@ -354,6 +413,18 @@ export default function AppointmentsPage() {
                         }`}>
                         {q.status}
                       </span>
+                      {q.status === 'completed' && (
+                        <button
+                          onClick={() => openReviewModal(q.business?._id, q.business?.name)}
+                          className={`text-sm font-medium flex items-center gap-1 ${reviewedBusinessIds.has(q.business?._id)
+                              ? 'text-green-600 hover:text-green-800'
+                              : 'text-yellow-600 hover:text-yellow-800'
+                            }`}
+                        >
+                          <Star className={`w-4 h-4 ${reviewedBusinessIds.has(q.business?._id) ? 'fill-current' : ''}`} />
+                          {reviewedBusinessIds.has(q.business?._id) ? 'Update Review' : 'Review'}
+                        </button>
+                      )}
                       <Link href={`/dashboard/customer/business/${q.business?._id}`} className="text-sm text-blue-600 hover:text-blue-800 font-medium">
                         View Business
                       </Link>
@@ -378,6 +449,18 @@ export default function AppointmentsPage() {
                         }`}>
                         {a.status}
                       </span>
+                      {a.status === 'completed' && (
+                        <button
+                          onClick={() => openReviewModal(a.business?._id, a.business?.name)}
+                          className={`text-sm font-medium flex items-center gap-1 ${reviewedBusinessIds.has(a.business?._id)
+                              ? 'text-green-600 hover:text-green-800'
+                              : 'text-yellow-600 hover:text-yellow-800'
+                            }`}
+                        >
+                          <Star className={`w-4 h-4 ${reviewedBusinessIds.has(a.business?._id) ? 'fill-current' : ''}`} />
+                          {reviewedBusinessIds.has(a.business?._id) ? 'Update Review' : 'Review'}
+                        </button>
+                      )}
                       <Link href={`/dashboard/customer/business/${a.business?._id}`} className="text-sm text-blue-600 hover:text-blue-800 font-medium">
                         View Business
                       </Link>
@@ -389,6 +472,62 @@ export default function AppointmentsPage() {
           )}
         </section>
       </div>
+
+      {/* Review Modal */}
+      {reviewModalOpen && selectedBusiness && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <Star className="w-5 h-5 text-yellow-500 fill-current" />
+                Rate {selectedBusiness.name}
+              </h3>
+              <button onClick={() => setReviewModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                <XCircle className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-6">
+              <div className="flex justify-center gap-2 mb-6">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setRating(star)}
+                    className={`p-1 transition-transform hover:scale-110 focus:outline-none`}
+                  >
+                    <Star
+                      className={`w-10 h-10 ${rating >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'} transition-colors duration-200`}
+                    />
+                  </button>
+                ))}
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Write a comment (optional)</label>
+                <textarea
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all resize-none"
+                  rows={4}
+                  placeholder="Share details of your experience..."
+                  maxLength={500}
+                />
+              </div>
+              <button
+                onClick={submitReview}
+                disabled={submittingReview || rating === 0}
+                className="w-full bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-bold py-3 px-4 rounded-xl transition-colors shadow-sm disabled:cursor-not-allowed"
+              >
+                {submittingReview
+                  ? 'Submitting...'
+                  : selectedBusiness && reviewedBusinessIds.has(selectedBusiness.id)
+                    ? 'Update Review'
+                    : 'Submit Review'
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

@@ -3,7 +3,9 @@ import dbConnect from "@/lib/dbConnect";
 import Appointment from "@/models/Appointment";
 import Business from "@/models/Business";
 import Notification from "@/models/Notification";
+import User from "@/models/User";
 import { getUser } from "@/lib/auth";
+import { sendEmail, appointmentStatusUpdateTemplate } from "@/lib/email";
 
 // GET: Fetch appointments for the logged-in business owner
 export async function GET(req: Request) {
@@ -75,6 +77,24 @@ export async function PATCH(req: Request) {
                 message: msg,
                 link: "/dashboard/customer/appointments"
             });
+        }
+
+        // Send Email to Customer
+        try {
+            const customer = await User.findById(appointment.user);
+            if (customer && customer.email) {
+                await sendEmail({
+                    to: customer.email,
+                    subject: `Appointment ${status === 'approved' ? 'Approved' : 'Updated'} - LiveQ`,
+                    html: appointmentStatusUpdateTemplate(
+                        customer.name || 'Customer',
+                        appointment.business?.name || 'The Business',
+                        status
+                    )
+                });
+            }
+        } catch (e) {
+            console.error("Email error:", e);
         }
 
         return NextResponse.json(appointment);

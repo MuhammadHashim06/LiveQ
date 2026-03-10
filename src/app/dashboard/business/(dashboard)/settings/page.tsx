@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Building2, Mail, Phone, MapPin, Globe, Save, Loader2, Image as ImageIcon } from "lucide-react"
 import toast from "react-hot-toast"
 
@@ -14,8 +14,12 @@ export default function BusinessSettingsPage() {
     email: "",
     phone: "",
     address: "",
-    website: ""
+    website: "",
+    logoUrl: ""
   })
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     const fetchBusiness = async () => {
@@ -30,7 +34,8 @@ export default function BusinessSettingsPage() {
             email: data.email || "",
             phone: data.phone || "",
             address: data.address || "",
-            website: data.website || ""
+            website: data.website || "",
+            logoUrl: data.logoUrl || ""
           })
         }
       } catch (err) {
@@ -63,6 +68,39 @@ export default function BusinessSettingsPage() {
     }
   }
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be less than 5MB");
+      return;
+    }
+
+    setUploadingImage(true);
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setForm((prev) => ({ ...prev, logoUrl: data.url }));
+        toast.success("Logo uploaded temporarily. Don't forget to save settings!");
+      } else {
+        toast.error(data.message || "Upload failed");
+      }
+    } catch (err) {
+      toast.error("Network error during upload");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -84,14 +122,30 @@ export default function BusinessSettingsPage() {
         {/* Sidebar Info */}
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm text-center">
-            <div className="w-24 h-24 bg-red-50 text-red-600 rounded-3xl flex items-center justify-center mx-auto mb-4 border-4 border-white shadow-xl">
-              <Building2 className="w-10 h-10" />
+            <div className="w-24 h-24 bg-red-50 text-red-600 rounded-3xl flex items-center justify-center mx-auto mb-4 border-4 border-white shadow-xl overflow-hidden relative group">
+              {form.logoUrl ? (
+                <img src={form.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+              ) : (
+                <Building2 className="w-10 h-10" />
+              )}
             </div>
             <h2 className="text-xl font-bold text-gray-900">{form.name || "Business Name"}</h2>
             <p className="text-sm font-semibold text-gray-400 uppercase tracking-widest mt-1">{form.category || "Uncategorized"}</p>
 
-            <button className="mt-6 w-full flex items-center justify-center gap-2 px-4 py-2 border-2 border-gray-100 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 transition">
-              <ImageIcon className="w-4 h-4" /> Change Logo
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept="image/*"
+              onChange={handleImageUpload}
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingImage}
+              className="mt-6 w-full flex items-center justify-center gap-2 px-4 py-2 border-2 border-gray-100 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition"
+            >
+              {uploadingImage ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
+              {uploadingImage ? "Uploading..." : "Change Logo"}
             </button>
           </div>
 
@@ -129,6 +183,20 @@ export default function BusinessSettingsPage() {
               </div>
 
               <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">Email Address</label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="email"
+                    value={form.email}
+                    onChange={e => setForm({ ...form, email: e.target.value })}
+                    className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-3 outline-none focus:ring-4 focus:ring-red-500/10 focus:border-red-500 transition-all font-medium"
+                    placeholder="contact@business.com"
+                  />
+                </div>
+              </div>
+
+              <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">Phone Number</label>
                 <div className="relative">
                   <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -138,6 +206,20 @@ export default function BusinessSettingsPage() {
                     onChange={e => setForm({ ...form, phone: e.target.value })}
                     className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-3 outline-none focus:ring-4 focus:ring-red-500/10 focus:border-red-500 transition-all font-medium"
                     placeholder="+1 (555) 000-0000"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">Website</label>
+                <div className="relative">
+                  <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="url"
+                    value={form.website}
+                    onChange={e => setForm({ ...form, website: e.target.value })}
+                    className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-3 outline-none focus:ring-4 focus:ring-red-500/10 focus:border-red-500 transition-all font-medium"
+                    placeholder="https://www.example.com"
                   />
                 </div>
               </div>

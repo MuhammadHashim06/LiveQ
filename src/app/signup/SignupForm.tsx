@@ -93,6 +93,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { User, Mail, Lock, Building, ArrowRight, Eye, EyeOff, ChevronDown } from "lucide-react"
 import CustomSelect from "@/components/ui/CustomSelect"
+import toast from "react-hot-toast"
 
 export default function SignupForm() {
   const router = useRouter()
@@ -117,14 +118,9 @@ export default function SignupForm() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.message)
-      if (form.role === "business") {
-        // Automaticaly log them in if possible, or just send to login then redirect.
-        // For now, let's just go to login. 
-        // But a better UX is to go to onboarding after they log in the first time.
-        router.push("/login?onboarding=true")
-      } else {
-        router.push("/login")
-      }
+
+      toast.success("Account created successfully! Please verify your email.")
+      router.push(`/auth/verify?email=${form.email}`)
     } catch (err: any) {
       setError(err.message)
     } finally {

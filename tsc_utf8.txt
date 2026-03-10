@@ -1,0 +1,6 @@
+﻿.next/types/app/api/services/route.ts(2,24): error TS2307: Cannot find module '../../../../../src/app/api/services/route.js' or its corresponding type declarations.
+.next/types/app/api/services/route.ts(5,29): error TS2307: Cannot find module '../../../../../src/app/api/services/route.js' or its corresponding type declarations.
+src/app/api/auth/reset-password/route.ts(5,20): error TS7016: Could not find a declaration file for module 'bcrypt'. 'D:/Xavinex/LiveQ/Development/liveq/node_modules/bcrypt/bcrypt.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/bcrypt` if it exists or add a new declaration (.d.ts) file containing `declare module 'bcrypt';`
+src/lib/mongodb.ts(7,21): error TS7017: Element implicitly has an 'any' type because type 'typeof globalThis' has no index signature.
+src/lib/mongodb.ts(10,19): error TS7017: Element implicitly has an 'any' type because type 'typeof globalThis' has no index signature.

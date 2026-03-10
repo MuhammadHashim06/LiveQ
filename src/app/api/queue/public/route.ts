@@ -4,6 +4,7 @@ import Queue from "@/models/Queue";
 import Business from "@/models/Business";
 import { getUser } from "@/lib/auth";
 import NotificationModel from "@/models/Notification";
+import { sendEmail, queueJoinedTemplate } from "@/lib/email";
 
 // GET: Fetch queue count for a specific business
 export async function GET(req: Request) {
@@ -86,6 +87,19 @@ export async function POST(req: Request) {
             message: `${nameToUse} has joined your queue.`,
             link: '/dashboard/business/queue'
         });
+
+        // Send Email to the Customer
+        if (user && (user as any).email) {
+            sendEmail({
+                to: (user as any).email,
+                subject: "You're in line! - LiveQ",
+                html: queueJoinedTemplate(
+                    (user as any).name || 'Customer',
+                    business.name,
+                    "Calculating..." // Position will be updated dynamically on the frontend/subsequent fetches
+                )
+            }).catch(err => console.error("Email error:", err));
+        }
 
         return NextResponse.json(newQueueItem, { status: 201 });
     } catch (error: any) {

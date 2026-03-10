@@ -85,15 +85,19 @@ import {
   MapPin,
   Settings,
   ClipboardList,
+  Clock,
+  Star
 } from "lucide-react"
 import NotificationBell from './NotificationBell'
 
 const navItems = [
   { label: "Queue", href: "/dashboard/business/queue", icon: Users },
   { label: "Appointments", href: "/dashboard/business/appointments", icon: Calendar },
+  { label: "Services", href: "/dashboard/business/services", icon: ClipboardList },
+  { label: "Availability", href: "/dashboard/business/availability", icon: Clock },
   { label: "Analytics", href: "/dashboard/business/analytics", icon: BarChart },
   { label: "Location", href: "/dashboard/business/location", icon: MapPin },
-  { label: "Services", href: "/dashboard/business/services", icon: ClipboardList },
+  { label: "Reviews", href: "/dashboard/business/reviews", icon: Star },
   { label: "Settings", href: "/dashboard/business/settings", icon: Settings },
 ]
 
@@ -111,10 +115,11 @@ export default function BusinessLayout({ children }: { children: React.ReactNode
     }
   }
 
+
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Top Sticky Navbar */}
-      <header className="sticky top-0 z-50 bg-gray-900 text-white shadow-md rounded-b-xl mx-4 mt-4 px-6 py-3 flex items-center justify-between backdrop-blur border border-gray-800">
+      <header id="business-navbar-header" className="sticky top-0 z-50 bg-gray-900 text-white shadow-md rounded-b-xl mx-4 mt-4 px-6 py-3 flex items-center justify-between backdrop-blur border border-gray-800">
         {/* Logo */}
         <Link href="/dashboard/business" className="text-xl font-bold tracking-wide">
           Live<span className="text-red-500">Q</span> Admin

@@ -104,6 +104,7 @@ export default function FindBusinessPage() {
   // Advanced Features State
   const [userLocation, setUserLocation] = useState<{ lat: number, lng: number } | null>(null)
   const [isSortingByNearest, setIsSortingByNearest] = useState(false)
+  const [isSortingByRating, setIsSortingByRating] = useState(false)
   const [queueCount, setQueueCount] = useState<number | null>(null)
   const [isJoiningQueue, setIsJoiningQueue] = useState(false)
 
@@ -150,6 +151,13 @@ export default function FindBusinessPage() {
   }, [selectedBusiness])
 
   const handleSortByNearest = () => {
+    if (isSortingByNearest) {
+      setIsSortingByNearest(false)
+      return
+    }
+
+    setIsSortingByRating(false) // mutually exclusive for simplicity
+
     if (!navigator.geolocation) {
       toast.error("Geolocation is not supported by your browser")
       return
@@ -168,6 +176,15 @@ export default function FindBusinessPage() {
         toast.error("Could not get your location. Please check browser permissions.", { id: 'location-toast' })
       }
     )
+  }
+
+  const handleSortByRating = () => {
+    if (isSortingByRating) {
+      setIsSortingByRating(false)
+    } else {
+      setIsSortingByNearest(false)
+      setIsSortingByRating(true)
+    }
   }
 
   const handleJoinQueue = async (e: React.FormEvent) => {
@@ -215,10 +232,16 @@ export default function FindBusinessPage() {
         ...biz,
         distance: getDistanceFromLatLonInKm(userLocation.lat, userLocation.lng, biz.lat, biz.lng)
       })).sort((a, b) => (a.distance || 0) - (b.distance || 0))
+    } else if (isSortingByRating) {
+      filtered = [...filtered].sort((a, b) => {
+        const ratingA = a.stats?.rating || 0;
+        const ratingB = b.stats?.rating || 0;
+        return ratingB - ratingA; // highest to lowest
+      })
     }
 
     return filtered
-  }, [businesses, searchQuery, categoryFilter, isSortingByNearest, userLocation])
+  }, [businesses, searchQuery, categoryFilter, isSortingByNearest, isSortingByRating, userLocation])
 
   const mapCenter = selectedBusiness
     ? { lat: selectedBusiness.lat, lng: selectedBusiness.lng }
@@ -275,7 +298,18 @@ export default function FindBusinessPage() {
                     }`}
                 >
                   <Navigation2 className="w-4 h-4" />
-                  {isSortingByNearest ? 'Sorted by Nearest' : 'Sort Nearest'}
+                  {isSortingByNearest ? 'Sorted Nearest' : 'Distance'}
+                </button>
+
+                <button
+                  onClick={handleSortByRating}
+                  className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-1.5 ${isSortingByRating
+                    ? 'bg-yellow-50 text-yellow-600 border border-yellow-200'
+                    : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                    }`}
+                >
+                  <Star className="w-4 h-4 fill-current" />
+                  Top Rated
                 </button>
               </div>
             </div>

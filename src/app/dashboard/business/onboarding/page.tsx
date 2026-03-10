@@ -319,8 +319,8 @@ export default function BusinessOnboarding() {
                                     onClick={() => handleSubmit(false)}
                                     disabled={loading || !hasSetLocation}
                                     className={`flex-1 font-bold py-3 rounded-lg transition flex items-center justify-center gap-2 ${hasSetLocation
-                                            ? 'bg-red-600 text-white hover:bg-red-700'
-                                            : 'bg-red-300 text-white cursor-not-allowed'
+                                        ? 'bg-red-600 text-white hover:bg-red-700'
+                                        : 'bg-red-300 text-white cursor-not-allowed'
                                         }`}
                                 >
                                     {loading ? "Saving..." : "Finish Setup"}
@@ -336,7 +336,7 @@ export default function BusinessOnboarding() {
                             <div className="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
                                 <CheckCircle2 className="w-12 h-12" />
                             </div>
-                            <h1 className="text-3xl font-bold text-gray-900 mb-4">You're All Set!</h1>
+                            <h1 className="text-3xl font-bold text-gray-900 mb-4">You&apos;re All Set!</h1>
                             <p className="text-gray-500 mb-8 text-lg">Your business profile is ready. Redirecting you to your dashboard...</p>
 
                             <div className="flex justify-center">

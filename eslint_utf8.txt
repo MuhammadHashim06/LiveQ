@@ -1,0 +1,257 @@
+﻿
+D:\Xavinex\LiveQ\Development\liveq\src\app\api\admin\businesses\route.ts
+  33:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\api\admin\stats\route.ts
+  10:27  error  'req' is defined but never used           @typescript-eslint/no-unused-vars
+  18:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  39:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\api\admin\users\route.ts
+   8:27  error  'req' is defined but never used           @typescript-eslint/no-unused-vars
+  21:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  33:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\api\analytics\route.ts
+   9:27  error  'req' is defined but never used           @typescript-eslint/no-unused-vars
+  16:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  37:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\api\appointments\book\route.ts
+  51:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\api\appointments\customer\early-arrival\route.ts
+  46:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\api\appointments\customer\route.ts
+   6:27  error  'req' is defined but never used           @typescript-eslint/no-unused-vars
+  21:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\api\auth\forgot-password\route.ts
+  59:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\api\auth\login\route.ts
+  48:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\api\auth\reset-password\route.ts
+  41:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\api\auth\signup\route.ts
+  30:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\api\business\appointments\checkin\route.ts
+  77:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\api\business\appointments\route.ts
+   9:27  error  'req' is defined but never used           @typescript-eslint/no-unused-vars
+  29:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  81:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\api\business\availability\route.ts
+   9:27  error  'req' is defined but never used           @typescript-eslint/no-unused-vars
+  16:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  22:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  35:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  52:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\api\business\me\route.ts
+   9:27  error  'req' is defined but never used           @typescript-eslint/no-unused-vars
+  16:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  22:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  35:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  46:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\api\business\services\[id]\route.ts
+  16:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  25:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  31:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\api\business\services\route.ts
+   9:27  error  'req' is defined but never used           @typescript-eslint/no-unused-vars
+  16:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  22:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  35:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  52:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\api\businesses\[id]\route.ts
+   4:8   error  'User' is defined but never used          @typescript-eslint/no-unused-vars
+  23:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\api\businesses\route.ts
+  14:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  24:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  37:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  49:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\api\notifications\[id]\route.ts
+  28:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\api\notifications\route.ts
+   6:27  error  'req' is defined but never used           @typescript-eslint/no-unused-vars
+  21:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  27:29  error  'req' is defined but never used           @typescript-eslint/no-unused-vars
+  43:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\api\queue\[id]\route.ts
+   5:10  error  'headers' is defined but never used              @typescript-eslint/no-unused-vars
+   7:7   error  'JWT_SECRET' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  45:21  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  57:21  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\api\queue\customer\route.ts
+   6:27  error  'req' is defined but never used           @typescript-eslint/no-unused-vars
+  23:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  39:64  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  56:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\api\queue\public\route.ts
+  39:21  error  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  56:40  error  'notes' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  91:21  error  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\api\queue\reorder\route.ts
+  20:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  46:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\api\queue\route.ts
+  12:27  error  'req' is defined but never used             @typescript-eslint/no-unused-vars
+  19:58  error  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  30:21  error  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  43:58  error  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  48:23  error  'notes' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  67:21  error  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\api\reviews\route.ts
+  57:21  error  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  70:13  error  'filter' is never reassigned. Use 'const' instead  prefer-const
+  70:21  error  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  80:21  error  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\api\upload\route.ts
+  16:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  30:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  48:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\api\user\me\route.ts
+   9:27  error  'req' is defined but never used           @typescript-eslint/no-unused-vars
+  16:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  23:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  36:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  54:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\dashboard\admin\page.tsx
+   29:69   error  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  113:113  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  113:130  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\dashboard\admin\users\page.tsx
+  4:10  error  'Users' is defined but never used   @typescript-eslint/no-unused-vars
+  4:23  error  'Shield' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\dashboard\business\analytics\page.tsx
+  23:55  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\dashboard\business\appointments\page.tsx
+   52:14  error  'err' is defined but never used                                  @typescript-eslint/no-unused-vars
+  163:76  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\dashboard\business\availability\page.tsx
+   48:53  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   51:47  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   53:22  error  'err' is defined but never used           @typescript-eslint/no-unused-vars
+  101:18  error  'err' is defined but never used           @typescript-eslint/no-unused-vars
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\dashboard\business\onboarding\page.tsx
+   77:23  error  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  339:86  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\dashboard\business\page.tsx
+  3:8  error  'BusinessLayout' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\dashboard\business\queue\page.tsx
+    4:16  error  'Trash2' is defined but never used        @typescript-eslint/no-unused-vars
+  224:14  error  'err' is defined but never used           @typescript-eslint/no-unused-vars
+  367:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  375:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  375:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\dashboard\business\services\page.tsx
+   8:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  45:14  error  'e' is defined but never used             @typescript-eslint/no-unused-vars
+  63:14  error  'e' is defined but never used             @typescript-eslint/no-unused-vars
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\dashboard\business\settings\page.tsx
+   41:16  error    'err' is defined but never used                                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+   64:14  error    'err' is defined but never used                                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+   97:14  error    'err' is defined but never used                                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+  127:17  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\dashboard\customer\appointments\page.tsx
+  117:14  error  'err' is defined but never used                                  @typescript-eslint/no-unused-vars
+  325:51  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  362:28  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\dashboard\customer\book\page.tsx
+    5:26  error  'Building2' is defined but never used  @typescript-eslint/no-unused-vars
+    5:56  error  'Users' is defined but never used      @typescript-eslint/no-unused-vars
+    5:73  error  'Clock' is defined but never used      @typescript-eslint/no-unused-vars
+    7:8   error  'Link' is defined but never used       @typescript-eslint/no-unused-vars
+  146:14  error  'err' is defined but never used        @typescript-eslint/no-unused-vars
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\dashboard\customer\business\[id]\page.tsx
+    5:57  error    'UserIcon' is defined but never used                                                                                  @typescript-eslint/no-unused-vars
+   16:16  error    Unexpected any. Specify a different type                                                                              @typescript-eslint/no-explicit-any
+  114:8   warning  React Hook useEffect has a missing dependency: 'fetchBusinessData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  139:18  error    'err' is defined but never used                                                                                       @typescript-eslint/no-unused-vars
+  217:62  error    Unexpected any. Specify a different type                                                                              @typescript-eslint/no-explicit-any
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\dashboard\customer\find\page.tsx
+  215:14  error  'err' is defined but never used       @typescript-eslint/no-unused-vars
+  489:58  error  'position' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\dashboard\customer\profile\page.tsx
+   35:16  error    'err' is defined but never used                                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+   60:14  error    'err' is defined but never used                                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+   93:14  error    'err' is defined but never used                                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+  122:19  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\forgot-password\page.tsx
+   4:10  error  'useRouter' is defined but never used                            @typescript-eslint/no-unused-vars
+  34:18  error  'err' is defined but never used                                  @typescript-eslint/no-unused-vars
+  52:48  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  59:50  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\login\LoginForm.tsx
+  127:19  error  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  238:16  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\page.tsx
+  6:3  error  'Smartphone' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\reset-password\page.tsx
+  58:18  error  'err' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\Xavinex\LiveQ\Development\liveq\src\app\signup\SignupForm.tsx
+   94:63  error  'ChevronDown' is defined but never used   @typescript-eslint/no-unused-vars
+  128:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Xavinex\LiveQ\Development\liveq\src\components\dashboard\NotificationBell.tsx
+  4:23  error  'Trash' is defined but never used  @typescript-eslint/no-unused-vars
+  5:8   error  'Link' is defined but never used   @typescript-eslint/no-unused-vars
+
+D:\Xavinex\LiveQ\Development\liveq\src\lib\auth.ts
+  11:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  13:14  error  'err' is defined but never used           @typescript-eslint/no-unused-vars
+
+D:\Xavinex\LiveQ\Development\liveq\src\lib\dbConnect.ts
+   7:5   error  'cached' is never reassigned. Use 'const' instead  prefer-const
+   7:25  error  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  17:14  error  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+
+D:\Xavinex\LiveQ\Development\liveq\src\lib\mongodb.ts
+  8:3   error  Unexpected var, use let or const instead  no-var
+  8:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+Γ£û 147 problems (144 errors, 3 warnings)
+  2 errors and 0 warnings potentially fixable with the `--fix` option.
+

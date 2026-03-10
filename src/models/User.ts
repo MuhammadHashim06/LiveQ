@@ -7,6 +7,11 @@ export interface IUser extends Document {
   role: "business" | "customer" | "admin";
   phoneNumber?: string;
   profileImage?: string;
+  resetPasswordToken?: string;
+  resetPasswordExpire?: Date;
+  isEmailVerified: boolean;
+  verifyEmailToken?: string;
+  verifyEmailExpire?: Date;
 }
 
 const UserSchema: Schema = new Schema(
@@ -17,6 +22,11 @@ const UserSchema: Schema = new Schema(
     role: { type: String, enum: ["business", "customer", "admin"], required: true },
     phoneNumber: { type: String },
     profileImage: { type: String },
+    resetPasswordToken: { type: String },
+    resetPasswordExpire: { type: Date },
+    isEmailVerified: { type: Boolean, default: false },
+    verifyEmailToken: { type: String },
+    verifyEmailExpire: { type: Date },
   },
   { timestamps: true }
 );

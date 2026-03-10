@@ -4,7 +4,9 @@ import Appointment from "@/models/Appointment";
 import Queue from "@/models/Queue";
 import Business from "@/models/Business";
 import Notification from "@/models/Notification";
+import User from "@/models/User";
 import { getUser } from "@/lib/auth";
+import { sendEmail, queueJoinedTemplate } from "@/lib/email";
 
 export async function POST(req: Request) {
     try {
@@ -72,6 +74,24 @@ export async function POST(req: Request) {
             message: `Your appointment check-in was successful. You have been added to the Live Queue at position ${newPosition}.`,
             link: "/dashboard/customer/appointments" // They can view their live queue here
         });
+
+        // Send Email to Customer
+        try {
+            const customer = await User.findById(appointment.user);
+            if (customer && customer.email) {
+                await sendEmail({
+                    to: customer.email,
+                    subject: "You're in line! - LiveQ",
+                    html: queueJoinedTemplate(
+                        customer.name || 'Customer',
+                        business.name,
+                        newPosition
+                    )
+                });
+            }
+        } catch (e) {
+            console.error("Email Error:", e);
+        }
 
         return NextResponse.json(newQueueItem, { status: 201 });
     } catch (error: any) {

@@ -20,6 +20,11 @@ export interface IBusiness extends Document {
   description?: string;
   address?: string;
   category: string;
+  email?: string;
+  phone?: string;
+  website?: string;
+  logoUrl?: string;
+  isVerified: boolean;
   services: IService[];
   availability: IAvailability[];
   lat: number;
@@ -51,6 +56,11 @@ const BusinessSchema: Schema = new Schema(
     description: { type: String },
     address: { type: String },
     category: { type: String, default: "General" },
+    email: { type: String },
+    phone: { type: String },
+    website: { type: String },
+    logoUrl: { type: String },
+    isVerified: { type: Boolean, default: false },
     services: [ServiceSchema],
     availability: [AvailabilitySchema],
     lat: { type: Number, default: 0 },

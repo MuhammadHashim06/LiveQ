@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Users, Mail, Shield, User as UserIcon, MoreVertical, Search, Trash2, Edit2 } from "lucide-react"
+import { Users, Mail, Shield, User as UserIcon, MoreVertical, Search, Trash2, Edit2, Loader2 } from "lucide-react"
 import toast from "react-hot-toast"
 
 interface User {
@@ -39,6 +39,28 @@ export default function AdminUsersPage() {
         }
         fetchUsers()
     }, [])
+
+    const [deletingId, setDeletingId] = useState<string | null>(null)
+
+    const deleteUser = async (id: string, name: string) => {
+        if (!confirm(`Are you sure you want to delete user ${name}? This action cannot be undone.`)) return;
+
+        setDeletingId(id);
+        try {
+            const res = await fetch(`/api/admin/users/${id}`, { method: "DELETE" });
+            if (res.ok) {
+                toast.success("User deleted successfully");
+                setUsers(users.filter(u => u._id !== id));
+            } else {
+                const data = await res.json();
+                toast.error(data.message || "Failed to delete user");
+            }
+        } catch (err) {
+            toast.error("An error occurred while deleting");
+        } finally {
+            setDeletingId(null);
+        }
+    };
 
     const filteredUsers = users.filter(user =>
         (user.name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
@@ -130,8 +152,13 @@ export default function AdminUsersPage() {
                                                 <button className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Edit User">
                                                     <Edit2 className="w-4 h-4" />
                                                 </button>
-                                                <button className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Delete User">
-                                                    <Trash2 className="w-4 h-4" />
+                                                <button
+                                                    onClick={() => deleteUser(user._id, user.name)}
+                                                    disabled={deletingId === user._id}
+                                                    className={`p-2 rounded-lg transition-all ${deletingId === user._id ? 'text-gray-400 cursor-not-allowed' : 'text-gray-400 hover:text-red-600 hover:bg-red-50'}`}
+                                                    title="Delete User"
+                                                >
+                                                    {deletingId === user._id ? <Loader2 className="w-4 h-4 animate-spin text-red-400" /> : <Trash2 className="w-4 h-4" />}
                                                 </button>
                                                 <button className="p-2 text-gray-400 hover:text-gray-900 rounded-lg transition-all">
                                                     <MoreVertical className="w-4 h-4" />

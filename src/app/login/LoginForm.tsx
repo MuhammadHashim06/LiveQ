@@ -91,6 +91,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Lock, Mail, ArrowRight, Eye, EyeOff } from "lucide-react"
+import toast from "react-hot-toast"
 
 export default function LoginForm() {
   const router = useRouter()
@@ -114,7 +115,21 @@ export default function LoginForm() {
         body: JSON.stringify(form),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.message)
+
+      // Handle email verification required (403 with requireVerification flag)
+      if (res.status === 403 && data.requireVerification) {
+        toast("Check your inbox — we sent a new verification code.", {
+          icon: "📧",
+          duration: 5000,
+        })
+        router.push(`/auth/verify?email=${encodeURIComponent(data.email || form.email)}`)
+        return
+      }
+
+      if (!res.ok) {
+        setError(data.message || "Login failed")
+        return
+      }
 
       const searchParams = new URLSearchParams(window.location.search)
       const isFirstTime = searchParams.get("onboarding") === "true"
@@ -125,7 +140,7 @@ export default function LoginForm() {
         router.push(`/dashboard/${data.user.role}`)
       }
     } catch (err: any) {
-      setError(err.message)
+      setError(err.message || "Something went wrong. Please try again.")
     } finally {
       setLoading(false)
     }
@@ -217,6 +232,11 @@ export default function LoginForm() {
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
+              <div className="flex justify-end mt-2">
+                <Link href="/forgot-password" className="text-sm font-semibold text-red-600 hover:text-red-700 hover:underline">
+                  Forgot Password?
+                </Link>
+              </div>
             </div>
 
             <button
@@ -230,7 +250,7 @@ export default function LoginForm() {
           </form>
 
           <p className="text-center text-sm text-gray-600 mt-8">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link href="/signup" className="text-red-600 font-semibold hover:underline">
               Create Account
             </Link>

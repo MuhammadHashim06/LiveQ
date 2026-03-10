@@ -123,12 +123,27 @@ export default function BookAppointmentPage() {
       return
     }
 
+    // Combine date + time in the browser (which knows the local timezone),
+    // then convert to UTC ISO string. This prevents the 5-hour offset
+    // that occurs when the server (UTC) tries to parse "2026-03-10T14:00"
+    // as if it were server-local time.
+    const localDateTimeStr = `${date}T${time}:00`
+    const scheduledTime = new Date(localDateTimeStr)
+    if (isNaN(scheduledTime.getTime())) {
+      toast.error("Invalid date or time selected")
+      return
+    }
+
     setIsBooking(true)
     try {
       const res = await fetch("/api/appointments/book", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ businessId: selectedBusiness._id, service, date, time }),
+        body: JSON.stringify({
+          businessId: selectedBusiness._id,
+          service,
+          scheduledTime: scheduledTime.toISOString(), // UTC ISO string
+        }),
       })
 
       const data = await res.json()

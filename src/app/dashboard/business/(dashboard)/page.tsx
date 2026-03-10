@@ -9,6 +9,7 @@ import {
   MapPin,
   ClipboardList,
   Settings,
+  Star,
 } from 'lucide-react'
 
 const quickLinks = [
@@ -41,6 +42,12 @@ const quickLinks = [
     href: '/dashboard/business/services',
     icon: <ClipboardList className="w-5 h-5 text-red-600" />,
     description: 'Edit, add, or remove the services you offer.',
+  },
+  {
+    label: 'Reviews',
+    href: '/dashboard/business/reviews',
+    icon: <Star className="w-5 h-5 text-red-600" />,
+    description: 'View and manage customer feedback and ratings.',
   },
   {
     label: 'Settings',

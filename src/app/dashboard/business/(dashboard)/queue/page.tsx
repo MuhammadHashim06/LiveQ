@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Plus, Trash2, RotateCcw, Check, X, Clock, Play, GripVertical, RefreshCw } from 'lucide-react'
+import { Plus, Trash2, RotateCcw, Check, X, Clock, Play, GripVertical, RefreshCw, UserX } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd'
 
@@ -425,6 +425,15 @@ export default function QueuePage() {
                                   <Check className="w-4 h-4" />
                                 </button>
                               )}
+
+                              <button
+                                onClick={() => updateStatus(item._id, 'cancelled')}
+                                className="bg-orange-100 text-orange-600 p-2.5 rounded-xl hover:bg-orange-200 transition shadow-sm"
+                                title="No-Show"
+                              >
+                                <UserX className="w-4 h-4" />
+                              </button>
+
                               <button
                                 onClick={() => updateStatus(item._id, 'removed')}
                                 className="bg-gray-100 text-gray-500 p-2.5 rounded-xl hover:bg-red-50 hover:text-red-600 transition"
