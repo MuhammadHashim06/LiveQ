@@ -36,6 +36,13 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: "Invalid date or time provided" }, { status: 400 });
         }
 
+        // Prevent booking in the past (with a 5-minute grace period)
+        const now = new Date();
+        const bufferTime = new Date(now.getTime() - 5 * 60000);
+        if (scheduledTime < bufferTime) {
+            return NextResponse.json({ message: "Cannot book an appointment in the past." }, { status: 400 });
+        }
+
         // --- Availability Enforcement ---
         // Map JS day index (0=Sun) to day names matching the Business model
         const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];

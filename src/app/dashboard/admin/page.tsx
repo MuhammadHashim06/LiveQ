@@ -138,40 +138,50 @@ export default function AdminOverview() {
 
                     <div>
                         <h3 className="text-sm font-black uppercase tracking-[0.2em] text-gray-500 mb-8">System Health</h3>
-                        <div className="space-y-8">
-                            <div>
-                                <div className="flex justify-between items-center mb-2">
-                                    <span className="text-xs font-bold uppercase tracking-widest text-gray-300">Server Load</span>
-                                    <span className="text-xs font-black text-red-500">22%</span>
+                        {stats.systemHealth ? (
+                            <div className="space-y-8">
+                                <div>
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="text-xs font-bold uppercase tracking-widest text-gray-300">Server Memory</span>
+                                        <span className={`text-xs font-black ${stats.systemHealth.memoryUsage > 80 ? 'text-red-500' : 'text-green-500'}`}>{stats.systemHealth.memoryUsage}%</span>
+                                    </div>
+                                    <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                                        <div className={`h-full rounded-full ${stats.systemHealth.memoryUsage > 80 ? 'bg-red-600' : 'bg-green-500'}`} style={{ width: `${stats.systemHealth.memoryUsage}%` }}></div>
+                                    </div>
                                 </div>
-                                <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden">
-                                    <div className="w-[22%] h-full bg-red-600 rounded-full"></div>
+                                <div>
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="text-xs font-bold uppercase tracking-widest text-gray-300">Database Perf</span>
+                                        <span className={`text-xs font-black ${stats.systemHealth.dbStatus === 'Optimal' ? 'text-green-500' : 'text-red-500'}`}>{stats.systemHealth.dbStatus}</span>
+                                    </div>
+                                    <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                                        <div className={`h-full rounded-full ${stats.systemHealth.dbStatus === 'Optimal' ? 'bg-green-500 w-full' : 'bg-red-600 w-1/2'}`}></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="text-xs font-bold uppercase tracking-widest text-gray-300">Active Queues</span>
+                                        <span className="text-xs font-black text-amber-500">{stats.systemHealth.activeQueues} live</span>
+                                    </div>
+                                    <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                                        <div className="w-full h-full bg-amber-500 rounded-full"></div>
+                                    </div>
                                 </div>
                             </div>
-                            <div>
-                                <div className="flex justify-between items-center mb-2">
-                                    <span className="text-xs font-bold uppercase tracking-widest text-gray-300">Database Perf</span>
-                                    <span className="text-xs font-black text-green-500">98%</span>
-                                </div>
-                                <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden">
-                                    <div className="w-[98%] h-full bg-green-500 rounded-full"></div>
-                                </div>
-                            </div>
-                            <div>
-                                <div className="flex justify-between items-center mb-2">
-                                    <span className="text-xs font-bold uppercase tracking-widest text-gray-300">Queue Processing</span>
-                                    <span className="text-xs font-black text-red-600">Active</span>
-                                </div>
-                                <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden">
-                                    <div className="w-[85%] h-full bg-red-600 rounded-full animate-pulse"></div>
-                                </div>
-                            </div>
-                        </div>
+                        ) : (
+                            <div className="text-sm text-gray-400">Loading metrics...</div>
+                        )}
                     </div>
 
                     <div className="mt-12 p-4 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-sm">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-red-500 mb-1">Alert</p>
-                        <p className="text-xs text-gray-400 font-medium">All systems are currently performing within optimal parameters.</p>
+                        <p className={`text-[10px] font-black uppercase tracking-widest mb-1 ${stats.systemHealth?.dbStatus !== 'Optimal' || stats.systemHealth?.memoryUsage > 80 ? 'text-red-500' : 'text-green-500'}`}>
+                            {stats.systemHealth?.dbStatus !== 'Optimal' || stats.systemHealth?.memoryUsage > 80 ? 'Warning' : 'All Clear'}
+                        </p>
+                        <p className="text-xs text-gray-400 font-medium">
+                            {stats.systemHealth?.dbStatus !== 'Optimal' || stats.systemHealth?.memoryUsage > 80
+                                ? 'System is experiencing high load or database degradation.'
+                                : 'All systems are currently performing within optimal parameters.'}
+                        </p>
                     </div>
                 </div>
             </div>

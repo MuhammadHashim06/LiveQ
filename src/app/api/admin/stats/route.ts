@@ -3,6 +3,9 @@ import dbConnect from "@/lib/dbConnect";
 import User from "@/models/User";
 import Business from "@/models/Business";
 import Appointment from "@/models/Appointment";
+import Queue from "@/models/Queue";
+import os from "os";
+import mongoose from "mongoose";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
@@ -54,12 +57,25 @@ export async function GET(req: Request) {
             growth = Math.round((recentUsersCount / userCount) * 100);
         }
 
+        // Real System Health basic metrics
+        const freeMem = os.freemem();
+        const totalMem = os.totalmem();
+        const memoryUsage = Math.round(((totalMem - freeMem) / totalMem) * 100);
+
+        const dbStatus = mongoose.connection.readyState === 1 ? 'Optimal' : 'Degraded';
+        const activeQueues = await Queue.countDocuments({ status: { $in: ['waiting', 'serving'] } });
+
         return NextResponse.json({
             users: userCount,
             businesses: businessCount,
             todayAppointments: appointmentCount,
             growth,
-            recentActivity
+            recentActivity,
+            systemHealth: {
+                memoryUsage,
+                dbStatus,
+                activeQueues
+            }
         });
     } catch (error: any) {
         return NextResponse.json({ message: error.message }, { status: 500 });
