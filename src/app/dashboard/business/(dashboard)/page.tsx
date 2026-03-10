@@ -1,7 +1,7 @@
 'use client'
 
-import BusinessLayout from '@/components/dashboard/BusinessLayout'
 import Link from 'next/link'
+import { useState, useEffect } from 'react'
 import {
   Users,
   Calendar,
@@ -10,7 +10,16 @@ import {
   ClipboardList,
   Settings,
   Star,
+  Clock,
+  Bell,
 } from 'lucide-react'
+
+type LiveStats = {
+  activeQueue: number
+  pendingAppointments: number
+  rating: number
+  today: number
+}
 
 const quickLinks = [
   {
@@ -58,6 +67,15 @@ const quickLinks = [
 ]
 
 export default function BusinessHomePage() {
+  const [stats, setStats] = useState<LiveStats | null>(null)
+
+  useEffect(() => {
+    fetch('/api/analytics')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => data && setStats(data))
+      .catch(() => { })
+  }, [])
+
   return (
     <>
       <div className="mb-10">
@@ -66,6 +84,48 @@ export default function BusinessHomePage() {
           Control your operations and grow your presence with LiveQ.
         </p>
       </div>
+
+      {/* Live Stats Bar */}
+      {stats && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4 hover:shadow-md transition">
+            <div className="p-3 rounded-2xl bg-red-50">
+              <Users className="w-6 h-6 text-red-600" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Live Queue</p>
+              <p className="text-2xl font-black text-gray-900">{stats.activeQueue}</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4 hover:shadow-md transition">
+            <div className="p-3 rounded-2xl bg-amber-50">
+              <Bell className="w-6 h-6 text-amber-600" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Pending Appts</p>
+              <p className="text-2xl font-black text-gray-900">{stats.pendingAppointments}</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4 hover:shadow-md transition">
+            <div className="p-3 rounded-2xl bg-yellow-50">
+              <Star className="w-6 h-6 text-yellow-500" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Avg Rating</p>
+              <p className="text-2xl font-black text-gray-900">{stats.rating.toFixed(1)} ⭐</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4 hover:shadow-md transition">
+            <div className="p-3 rounded-2xl bg-green-50">
+              <Clock className="w-6 h-6 text-green-600" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Served Today</p>
+              <p className="text-2xl font-black text-gray-900">{stats.today}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {quickLinks.map(({ label, href, icon, description }) => (

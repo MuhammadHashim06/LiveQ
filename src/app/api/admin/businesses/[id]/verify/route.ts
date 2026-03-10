@@ -40,11 +40,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             return NextResponse.json({ message: "Business not found" }, { status: 404 });
         }
 
-        // If newly verified, send congratulations email to the owner
+        // If newly verified, send congratulations email + in-app notification to the owner
         if (isVerified && business.owner) {
             try {
-                // Determine owner email (from populated user or from business contact email)
-                // Business.owner is populated, so it has .email and .name
                 const owner = business.owner as any;
                 const ownerEmail = owner.email || business.email;
                 if (ownerEmail) {
@@ -55,9 +53,35 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
                     });
                     console.log(`Verification email sent to ${ownerEmail}`);
                 }
+
+                // In-app notification
+                const NotificationModel = (await import('@/models/Notification')).default;
+                await NotificationModel.create({
+                    recipient: owner._id || business.owner,
+                    type: 'system',
+                    title: '🎉 Business Verified!',
+                    message: `Congratulations! Your business "${business.name}" has been verified by LiveQ. You're now visible to all customers.`,
+                    link: '/dashboard/business'
+                });
             } catch (emailErr) {
-                console.error("Failed to send verification email:", emailErr);
-                // Do not throw the error to avoid failing the verification API entirely
+                console.error("Failed to send verification email or notification:", emailErr);
+            }
+        }
+
+        // If unverified, send in-app notification
+        if (!isVerified && business.owner) {
+            try {
+                const NotificationModel = (await import('@/models/Notification')).default;
+                const owner = business.owner as any;
+                await NotificationModel.create({
+                    recipient: owner._id || business.owner,
+                    type: 'system',
+                    title: 'Business Verification Update',
+                    message: `Your business "${business.name}" has been unverified by a LiveQ admin. Please contact support for more details.`,
+                    link: '/dashboard/business/settings'
+                });
+            } catch (notifErr) {
+                console.error("Failed to send unverification notification:", notifErr);
             }
         }
 
