@@ -1,0 +1,98 @@
+# LiveQ - Project Features & Functionalities Review
+
+Based on the analysis of the project structure and codebase, here is a comprehensive breakdown of the features, modules, and functionalities present in the LiveQ application.
+
+## ⚙️ Tech Stack & Architecture
+- **Framework**: Next.js 15 (App Router)
+- **Language**: TypeScript
+- **Database**: MongoDB (via Mongoose)
+- **Styling**: Tailwind CSS
+- **Authentication**: Custom JWT-based Auth (bcrypt, jose, jsonwebtoken)
+- **Real-time**: Socket.IO (for live queue updates and notifications)
+- **Maps integration**: React Google Maps API
+- **Charts & Visuals**: Recharts
+- **Storage**: Cloudinary (for image/file uploads)
+- **Emails**: Nodemailer
+
+---
+
+## 👥 User Roles
+The platform operates with three primary user roles:
+1. **Admin**: Platform managers overseeing users and businesses.
+2. **Business**: Service providers who manage queues and appointments.
+3. **Customer**: End-users who find businesses, book appointments, and join queues.
+
+---
+
+## 🔐 1. Authentication & Account Management
+**Endpoints:** `src/app/api/auth/*` & `src/app/api/user/*`
+- **Sign Up / Registration**
+- **Login / Logout**
+- **OTP Verification**: Email verification via OTP.
+- **Resend Verification**: Re-trigger verification emails.
+- **Password Management**: Forgot Password, Reset Password, and Change Password.
+- **Profile Management**: Fetch and update personal user profile information (`/api/user/me`).
+
+---
+
+## 🏢 2. Business Features (Service Providers)
+**Dashboard:** `src/app/dashboard/business/*`
+**Endpoints:** `src/app/api/business/*`
+
+- **Onboarding Flow**: Dedicated setup wizard for newly registered businesses.
+- **Business Profile Settings**: Manage business details, description, and contact info.
+- **Service Management**: Create, read, update, and delete specific services offered by the business.
+- **Availability Management**: Set specific open/close hours and working days.
+- **Location Setup**: Google Maps integration to set exact coordinates and address.
+- **Appointments Management**: 
+  - View upcoming and past customer bookings.
+  - Customer Check-in functionality to transition an appointment into an active queue status.
+- **Queue Management**:
+  - View current active queue.
+  - Drag-and-drop capability to reorder the queue.
+- **Reviews & Feedback**: Monitor and read reviews submitted by customers.
+- **Analytics & Dashboard Overview**: Graphical representation (Recharts) of business performance, queue stats, and daily bookings.
+
+---
+
+## 🙋 3. Customer Features (End Users)
+**Dashboard:** `src/app/dashboard/customer/*`
+**Endpoints:** `src/app/api/appointments/*` & `src/app/api/queue/customer/*`
+
+- **Find Businesses**: Directory to search and locate registered active businesses using maps.
+- **Business Details Page**: View a specific business's profile, services, and location.
+- **Booking System**: 
+  - Select services and book appointments with businesses.
+  - View personal upcoming and past appointment history.
+- **Queue Tracking**: Participate in a live queue and monitor real-time position status.
+- **Early Arrival feature**: Functionality for customers to indicate they have arrived at the location early.
+- **Entertainment Module**: In-app entertainment section to keep customers engaged while waiting in the queue.
+- **Reviews**: Ability to leave reviews for businesses after service completion.
+
+---
+
+## 👑 4. Admin Features (Platform Management)
+**Dashboard:** `src/app/dashboard/admin/*`
+**Endpoints:** `src/app/api/admin/*`
+
+- **Platform AnalyticsOverview**: High-level platform statistics (total users, active businesses, platform usage).
+- **Business Management**:
+  - View a list of all businesses.
+  - View specific business details.
+  - Verify and approve businesses (`/api/admin/businesses/[id]/verify`).
+- **User Management**: 
+  - View and manage all registered customer accounts.
+- **Reports & Exports**: Functionality to export user and business data into downloadable formats.
+
+---
+
+## 🔔 5. Core System Entities & Modules
+**Database Models:** `src/models/*`
+
+- **User**: Base model for authentication, identifying admins, customers, or business owners.
+- **Business**: Specific schema handling location data, operating hours, and business metadata.
+- **Appointment**: Links a Customer to a Business for a specific scheduled time and service.
+- **Queue**: Manages the current list of waiting customers, their positions, and real-time status.
+- **Review**: Relationship between a Customer and Business containing ratings and textual feedback.
+- **Notification**: System for sending out email and in-app alerts (reminders, queue updates, verification).
+- **Uploads**: Dedicated API route to handle Cloudinary image/file uploads (used for profiles and business galleries).
