@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Calendar as CalendarIcon, Clock, User, Check, X, Filter } from "lucide-react"
 import toast from "react-hot-toast"
+import { useRealtime } from "@/lib/useRealtime"
 
 interface Appointment {
   _id: string
@@ -34,8 +35,12 @@ export default function BusinessAppointmentsPage() {
     }
   }
 
+  useRealtime("appointment:changed", () => { void fetchAppointments() })
+
   useEffect(() => {
     fetchAppointments()
+    const interval = setInterval(() => { void fetchAppointments() }, 30000)
+    return () => clearInterval(interval)
   }, [])
 
   const updateStatus = async (id: string, status: string) => {

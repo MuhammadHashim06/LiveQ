@@ -6,6 +6,7 @@ import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 import Notification from "@/models/Notification";
 import { JWT_SECRET } from "@/lib/auth";
+import { emitBusinessEvent, emitUserEvent } from "@/lib/realtime";
 
 // GET: Fetch queue for current business
 export async function GET(req: Request) {
@@ -54,6 +55,8 @@ export async function POST(req: Request) {
             status: "waiting",
             joinedAt: new Date(),
         });
+        const realtimePayload = { businessId: String(business._id) };
+        emitBusinessEvent(String(business._id), "queue:changed", realtimePayload, String(business.owner));
 
         // Create a system notification for the business owner as a paper trail (Optional, but good practice)
         await Notification.create({
@@ -63,6 +66,7 @@ export async function POST(req: Request) {
             message: `You manually added ${newQueueItem.name} to the queue.`,
             link: '/dashboard/business/queue'
         });
+        emitUserEvent(String(business.owner), "notification:changed");
 
         return NextResponse.json(newQueueItem, { status: 201 });
     } catch (error: any) {

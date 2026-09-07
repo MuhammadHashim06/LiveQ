@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { Clock, CheckCircle2, XCircle, Building2, MapPin, Users, Star } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useRealtime } from '@/lib/useRealtime'
 import Link from 'next/link'
 
 type QueueItem = {
@@ -162,6 +163,9 @@ export default function AppointmentsPage() {
     }
   }
 
+  useRealtime('queue:changed', () => { void fetchQueues() })
+  useRealtime('appointment:changed', () => { void fetchAppointments() })
+
   useEffect(() => {
     fetchQueues()
     fetchAppointments()
@@ -177,9 +181,9 @@ export default function AppointmentsPage() {
     }).catch(() => { })
 
     const interval = setInterval(() => {
-      fetchQueues()
-      fetchAppointments()
-    }, 10000)
+      void fetchQueues()
+      void fetchAppointments()
+    }, 30000)
 
     return () => clearInterval(interval)
   }, [])

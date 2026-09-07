@@ -5,6 +5,7 @@ import Business from "@/models/Business";
 import { getUser } from "@/lib/auth";
 import NotificationModel from "@/models/Notification";
 import { sendEmail, queueJoinedTemplate } from "@/lib/email";
+import { emitBusinessEvent, emitUserEvent } from "@/lib/realtime";
 
 // GET: Fetch queue count for a specific business
 export async function GET(req: Request) {
@@ -91,6 +92,8 @@ export async function POST(req: Request) {
             status: "waiting",
             joinedAt: new Date(),
         });
+        const realtimePayload = { businessId: String(business._id) };
+        emitBusinessEvent(String(business._id), "queue:changed", realtimePayload, String(business.owner));
 
         // Notify the business owner
         await NotificationModel.create({
@@ -100,6 +103,7 @@ export async function POST(req: Request) {
             message: `${nameToUse} has joined your queue.`,
             link: '/dashboard/business/queue'
         });
+        emitUserEvent(String(business.owner), "notification:changed");
 
         // Send Email to the Customer
         if (user && (user as any).email) {

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Bell, Check, Trash } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useRealtime } from '@/lib/useRealtime'
 
 interface Notification {
     _id: string
@@ -38,13 +39,15 @@ export default function NotificationBell() {
     useEffect(() => {
         fetchNotifications()
 
-        // Poll every 15 seconds
+        // Slow fallback for reconnects; normal updates arrive over Socket.IO.
         const interval = setInterval(() => {
             fetchNotifications()
-        }, 15000)
+        }, 30000)
 
         return () => clearInterval(interval)
     }, [])
+
+    useRealtime('notification:changed', fetchNotifications)
 
     useEffect(() => {
         // Close dropdown when clicking outside

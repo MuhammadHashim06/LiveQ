@@ -57,6 +57,7 @@ import { GoogleMap, LoadScript, Marker, InfoWindow } from '@react-google-maps/ap
 import { Search, MapPin, Building2, Navigation2, Star, Users, Clock } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Link from 'next/link'
+import { useRealtime } from '@/lib/useRealtime'
 
 // Haversine distance formula to calculate distance between two lat/lng points in km
 function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -149,6 +150,14 @@ export default function FindBusinessPage() {
     }
     fetchQueueCount()
   }, [selectedBusiness])
+
+  useRealtime('queue:changed', () => {
+    if (!selectedBusiness) return
+    void fetch(`/api/queue/public?businessId=${selectedBusiness._id}`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => { if (data) setQueueCount(data.count) })
+      .catch(() => { })
+  }, selectedBusiness?._id)
 
   const handleSortByNearest = () => {
     if (isSortingByNearest) {

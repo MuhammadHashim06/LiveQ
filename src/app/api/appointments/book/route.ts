@@ -5,6 +5,7 @@ import Business from "@/models/Business";
 import Notification from "@/models/Notification";
 import { getUser } from "@/lib/auth";
 import { sendEmail, appointmentConfirmationTemplate } from "@/lib/email";
+import { emitUserEvent } from "@/lib/realtime";
 
 export async function POST(req: Request) {
     try {
@@ -123,6 +124,8 @@ export async function POST(req: Request) {
             message: `${user.name || 'A customer'} requested an appointment for ${serviceName} on ${scheduledTime.toLocaleDateString()} at ${scheduledTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`,
             link: "/dashboard/business/appointments"
         });
+        emitUserEvent(String(business.owner), "appointment:changed", { businessId: String(business._id) });
+        emitUserEvent(String(business.owner), "notification:changed");
 
         // Send Email Confirmation to Customer
         if (user.email) {

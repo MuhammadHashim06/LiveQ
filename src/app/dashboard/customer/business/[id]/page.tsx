@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import { Building2, MapPin, Users, Star, Clock, User as UserIcon, RefreshCw } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Link from 'next/link'
+import { useRealtime } from '@/lib/useRealtime'
 
 type Business = {
     _id: string
@@ -95,6 +96,8 @@ export default function BusinessDetailPage() {
         }
     }, [businessId])
 
+    useRealtime('queue:changed', () => { void fetchBusinessData() }, businessId)
+
     const handleManualRefresh = () => {
         setIsRefreshing(true)
         fetchBusinessData()
@@ -106,8 +109,8 @@ export default function BusinessDetailPage() {
 
             // Poll for live queue updates every 10 seconds
             const interval = setInterval(() => {
-                fetchBusinessData()
-            }, 10000)
+                void fetchBusinessData()
+            }, 30000)
 
             return () => clearInterval(interval)
         }

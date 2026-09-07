@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Plus, Trash2, RotateCcw, Check, X, Clock, Play, GripVertical, RefreshCw, UserX } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd'
+import { useRealtime } from '@/lib/useRealtime'
 
 interface QueueItem {
   _id: string
@@ -39,8 +40,11 @@ export default function QueuePage() {
   const isFirstLoad = useRef(true)
   // Real undo would fetch 'removed' items from DB
 
-  const fetchQueueAndAppointments = async () => {
-    setLoading(true)
+  const requestVersion = useRef(0)
+
+  const fetchQueueAndAppointments = async (showLoading = true) => {
+    const requestId = ++requestVersion.current
+    if (showLoading) setLoading(true)
     try {
       // Fetch Live Queue
       const queueRes = await fetch('/api/queue')
@@ -57,6 +61,7 @@ export default function QueuePage() {
           }
         }
 
+        if (requestId !== requestVersion.current) return
         prevQueueRef.current = queueData
         setQueue(queueData)
       }
@@ -65,6 +70,7 @@ export default function QueuePage() {
       const apptRes = await fetch('/api/business/appointments')
       if (apptRes.ok) {
         const apptData = await apptRes.json()
+        if (requestId !== requestVersion.current) return
         setAppointments(apptData)
       }
 
@@ -73,10 +79,15 @@ export default function QueuePage() {
     } catch (e) {
       console.error(e)
     } finally {
-      setLoading(false)
-      setIsRefreshing(false)
+      if (requestId === requestVersion.current) {
+        setLoading(false)
+        setIsRefreshing(false)
+      }
     }
   }
+
+  useRealtime('queue:changed', () => { void fetchQueueAndAppointments(false) })
+  useRealtime('appointment:changed', () => { void fetchQueueAndAppointments(false) })
 
   const handleManualRefresh = () => {
     setIsRefreshing(true)
@@ -85,13 +96,13 @@ export default function QueuePage() {
 
   useEffect(() => {
     fetchQueueAndAppointments()
-    // Poll every 10s for updates ONLY if not currently dragging
+    // Slow fallback for reconnects; normal updates arrive over Socket.IO.
     const interval = setInterval(() => {
       // Checking document.body to see if dragging is active (dnd adds a class usually)
       if (!document.body.classList.contains('dragging')) {
-        fetchQueueAndAppointments()
+        void fetchQueueAndAppointments(false)
       }
-    }, 10000)
+    }, 30000)
     return () => clearInterval(interval)
   }, [])
 

@@ -3,6 +3,7 @@ import dbConnect from "@/lib/dbConnect";
 import Appointment from "@/models/Appointment";
 import Notification from "@/models/Notification";
 import { getUser } from "@/lib/auth";
+import { emitUserEvent } from "@/lib/realtime";
 
 export async function PATCH(req: Request) {
     try {
@@ -40,6 +41,8 @@ export async function PATCH(req: Request) {
                 message: `${user.name || 'A customer'} has arrived early for their ${timeStr} appointment. Check your Live Queue dashboard.`,
                 link: "/dashboard/business/queue"
             });
+            emitUserEvent(String(appointment.business.owner), "appointment:changed", { appointmentId: String(appointment._id) });
+            emitUserEvent(String(appointment.business.owner), "notification:changed");
         }
 
         return NextResponse.json(appointment);

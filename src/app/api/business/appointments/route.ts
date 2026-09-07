@@ -6,6 +6,7 @@ import Notification from "@/models/Notification";
 import User from "@/models/User";
 import { getUser } from "@/lib/auth";
 import { sendEmail, appointmentStatusUpdateTemplate } from "@/lib/email";
+import { emitUserEvent } from "@/lib/realtime";
 
 // GET: Fetch appointments for the logged-in business owner
 export async function GET(req: Request) {
@@ -65,6 +66,8 @@ export async function PATCH(req: Request) {
         if (!appointment) {
             return NextResponse.json({ message: "Appointment not found" }, { status: 404 });
         }
+        emitUserEvent(String(appointment.user?._id), "appointment:changed", { appointmentId: appointment.id });
+        emitUserEvent(user.id, "appointment:changed", { appointmentId: appointment.id });
 
         // Trigger Notification if confirmed or cancelled
         if (['confirmed', 'cancelled', 'completed'].includes(status) && appointment.user) {
@@ -78,6 +81,7 @@ export async function PATCH(req: Request) {
                 message: msg,
                 link: "/dashboard/customer/appointments"
             });
+            emitUserEvent(String(appointment.user._id), "notification:changed");
         }
 
         // Send Email to Customer

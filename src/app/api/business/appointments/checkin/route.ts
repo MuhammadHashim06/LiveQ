@@ -7,6 +7,7 @@ import Notification from "@/models/Notification";
 import User from "@/models/User";
 import { getUser } from "@/lib/auth";
 import { sendEmail, queueJoinedTemplate } from "@/lib/email";
+import { emitBusinessEvent, emitUserEvent } from "@/lib/realtime";
 
 export async function POST(req: Request) {
     try {
@@ -62,6 +63,10 @@ export async function POST(req: Request) {
         // Keep the appointment confirmed until the queue item is completed.
         appointment.checkedInAt = new Date();
         await appointment.save();
+        const realtimePayload = { businessId: String(business._id), appointmentId: String(appointment._id) };
+        emitBusinessEvent(String(business._id), "queue:changed", realtimePayload, String(business.owner));
+        emitUserEvent(String(appointment.user), "queue:changed", realtimePayload);
+        emitUserEvent(String(appointment.user), "appointment:changed", realtimePayload);
 
         // Notify the Customer
         await Notification.create({
@@ -71,6 +76,7 @@ export async function POST(req: Request) {
             message: `Your appointment check-in was successful. You have been added to the Live Queue at position ${newPosition}.`,
             link: "/dashboard/customer/appointments" // They can view their live queue here
         });
+        emitUserEvent(String(appointment.user), "notification:changed");
 
         // Send Email to Customer
         try {

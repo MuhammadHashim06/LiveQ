@@ -7,6 +7,7 @@ import NotificationModel from "@/models/Notification";
 import User from "@/models/User";
 import { sendEmail, queueUpdateTemplate } from "@/lib/email";
 import { getUser } from "@/lib/auth";
+import { emitBusinessEvent, emitUserEvent } from "@/lib/realtime";
 
 // PATCH: Update status (serving, completed, removed)
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -36,6 +37,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         const wasCompleted = updatedQueue.status === "completed";
         updatedQueue.status = status;
         await updatedQueue.save();
+        const realtimePayload = { businessId: String(business._id), queueId: id };
+        emitBusinessEvent(String(business._id), "queue:changed", realtimePayload, String(business.owner));
+        emitUserEvent(updatedQueue.user?.toString(), "queue:changed", realtimePayload);
 
         if (updatedQueue && updatedQueue.user && status === 'serving') {
             await NotificationModel.create({
@@ -45,6 +49,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
                 message: `The business ${updatedQueue.business?.name || ''} is ready to serve you.`,
                 link: `/dashboard/customer/queue`
             });
+            emitUserEvent(updatedQueue.user.toString(), "notification:changed");
 
             // Send Email Notification
             const user = await User.findById(updatedQueue.user);
@@ -65,6 +70,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
                 message: `Your position at ${updatedQueue.business?.name || ''} has been marked as No-Show and cancelled.`,
                 link: `/dashboard/customer/queue`
             });
+            emitUserEvent(updatedQueue.user.toString(), "notification:changed");
 
             // Send Email Notification
             const user = await User.findById(updatedQueue.user);
@@ -87,6 +93,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
         if (status === "completed" && updatedQueue.appointment) {
             await Appointment.findByIdAndUpdate(updatedQueue.appointment, { status: "completed" });
+            emitUserEvent(updatedQueue.user?.toString(), "appointment:changed", { appointmentId: String(updatedQueue.appointment) });
         }
 
         return NextResponse.json(updatedQueue);
@@ -111,6 +118,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
         }
 
         await queue.deleteOne();
+        emitBusinessEvent(String(business._id), "queue:changed", { businessId: String(business._id), queueId: id }, user.id);
         return NextResponse.json({ message: "Deleted" });
     } catch (error: any) {
         return NextResponse.json({ message: error.message }, { status: 500 });

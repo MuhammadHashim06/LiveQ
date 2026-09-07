@@ -5,6 +5,7 @@ import Business from "@/models/Business";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "@/lib/auth";
+import { emitBusinessEvent } from "@/lib/realtime";
 
 // PUT: Bulk update sortOrder for queue items (Drag and Drop)
 export async function PUT(req: Request) {
@@ -40,6 +41,12 @@ export async function PUT(req: Request) {
         if (bulkOps.length > 0) {
             await Queue.bulkWrite(bulkOps);
         }
+        emitBusinessEvent(
+            String(business._id),
+            "queue:changed",
+            { businessId: String(business._id) },
+            String(business.owner)
+        );
 
         return NextResponse.json({ message: "Queue reordered successfully" }, { status: 200 });
 

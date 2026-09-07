@@ -89,6 +89,7 @@ import {
   Star
 } from "lucide-react"
 import NotificationBell from './NotificationBell'
+import { disconnectSocket } from '@/lib/socket-client'
 
 const navItems = [
   { label: "Queue", href: "/dashboard/business/queue", icon: Users },
@@ -108,9 +109,11 @@ export default function BusinessLayout({ children }: { children: React.ReactNode
   const handleLogout = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" })
+      disconnectSocket()
       router.push("/login")
     } catch (error) {
       console.error("Logout failed:", error)
+      disconnectSocket()
       router.push("/login")
     }
   }
