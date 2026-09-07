@@ -3,8 +3,7 @@ import dbConnect from "@/lib/dbConnect";
 import Business from "@/models/Business";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
-
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
+import { JWT_SECRET } from "@/lib/auth";
 
 export async function GET(req: Request) {
     try {
@@ -14,6 +13,7 @@ export async function GET(req: Request) {
         if (!token) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
         const payload = jwt.verify(token, JWT_SECRET) as any;
+        if (payload.role !== "business") return NextResponse.json({ message: "Business access only" }, { status: 403 });
 
         const business = await Business.findOne({ owner: payload.id });
         if (!business) return NextResponse.json({ message: "Business not found" }, { status: 404 });
@@ -33,12 +33,15 @@ export async function PUT(req: Request) {
         if (!token) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
         const payload = jwt.verify(token, JWT_SECRET) as any;
+        if (payload.role !== "business") return NextResponse.json({ message: "Business access only" }, { status: 403 });
 
         const body = await req.json();
+        const fields = ["name", "description", "address", "category", "email", "phone", "website", "logoUrl", "lat", "lng"];
+        const updates = Object.fromEntries(fields.filter((field) => body[field] !== undefined).map((field) => [field, body[field]]));
 
         const updatedBusiness = await Business.findOneAndUpdate(
             { owner: payload.id },
-            { $set: body },
+            { $set: updates, $setOnInsert: { owner: payload.id } },
             { new: true, upsert: true } // upsert true allows creating if not exists via this endpoint too
         );
 

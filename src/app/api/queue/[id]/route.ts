@@ -2,12 +2,11 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Queue from "@/models/Queue";
 import Business from "@/models/Business";
+import Appointment from "@/models/Appointment";
 import NotificationModel from "@/models/Notification";
 import User from "@/models/User";
 import { sendEmail, queueUpdateTemplate } from "@/lib/email";
-import { headers } from "next/headers";
-
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
+import { getUser } from "@/lib/auth";
 
 // PATCH: Update status (serving, completed, removed)
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -15,14 +14,28 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     try {
         await dbConnect();
         const { status } = await req.json(); // "serving", "completed", "removed", "waiting" (for undo)
+        const allowedStatuses = ["waiting", "serving", "completed", "removed", "cancelled"];
+        if (!allowedStatuses.includes(status)) {
+            return NextResponse.json({ message: "Invalid queue status" }, { status: 400 });
+        }
 
-        // Auth check (omitted for brevity but should exist)
+        const user = await getUser();
+        if (!user) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
-        const updatedQueue = await Queue.findByIdAndUpdate(
-            id,
-            { status },
-            { new: true }
-        ).populate('business', 'name');
+        const updatedQueue = await Queue.findById(id).populate('business', 'name owner');
+        if (!updatedQueue) return NextResponse.json({ message: "Queue item not found" }, { status: 404 });
+
+        const business = updatedQueue.business as any;
+        const isBusinessOwner = user.role === "business" && business?.owner?.toString() === user.id;
+        const isCustomerCancel = user.role === "customer" && status === "cancelled" &&
+            ["waiting", "serving"].includes(updatedQueue.status) && updatedQueue.user?.toString() === user.id;
+        if (!isBusinessOwner && !isCustomerCancel) {
+            return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+        }
+
+        const wasCompleted = updatedQueue.status === "completed";
+        updatedQueue.status = status;
+        await updatedQueue.save();
 
         if (updatedQueue && updatedQueue.user && status === 'serving') {
             await NotificationModel.create({
@@ -65,11 +78,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         }
 
         // Increment totalCustomers when a queue item is completed
-        if (status === 'completed' && updatedQueue?.business) {
+        if (status === 'completed' && updatedQueue?.business && !wasCompleted) {
             await Business.findByIdAndUpdate(
                 updatedQueue.business._id,
                 { $inc: { 'stats.totalCustomers': 1 } }
             );
+        }
+
+        if (status === "completed" && updatedQueue.appointment) {
+            await Appointment.findByIdAndUpdate(updatedQueue.appointment, { status: "completed" });
         }
 
         return NextResponse.json(updatedQueue);
@@ -83,7 +100,17 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     const { id } = await params;
     try {
         await dbConnect();
-        await Queue.findByIdAndDelete(id);
+        const user = await getUser();
+        if (!user) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+
+        const queue = await Queue.findById(id).populate("business", "owner");
+        if (!queue) return NextResponse.json({ message: "Queue item not found" }, { status: 404 });
+        const business = queue.business as any;
+        if (user.role !== "business" || business?.owner?.toString() !== user.id) {
+            return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+        }
+
+        await queue.deleteOne();
         return NextResponse.json({ message: "Deleted" });
     } catch (error: any) {
         return NextResponse.json({ message: error.message }, { status: 500 });

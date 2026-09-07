@@ -19,6 +19,9 @@ export async function GET(req: Request) {
             return NextResponse.json({ message: "Business ID is required" }, { status: 400 });
         }
 
+        const business = await Business.findOne({ _id: businessId, isVerified: true }).select("_id");
+        if (!business) return NextResponse.json({ message: "Business not found" }, { status: 404 });
+
         const query = {
             business: businessId,
             status: { $in: ["waiting", "serving"] } // Active queue size
@@ -30,7 +33,7 @@ export async function GET(req: Request) {
             // Also return the sorted list of people in the queue
             const queueList = await Queue.find(query)
                 .sort({ sortOrder: 1, joinedAt: 1 }) // Respect custom order first
-                .select("name status joinedAt user") // Obscuring user id is not strictly necessary but keeping just vital info
+                .select("name status joinedAt")
                 .lean();
 
             return NextResponse.json({ count: queueCount, list: queueList });
@@ -49,18 +52,18 @@ export async function POST(req: Request) {
 
         // We require the customer to be logged in to join a queue
         const user = await getUser();
-        if (!user) {
+        if (!user || user.role !== "customer") {
             return NextResponse.json({ message: "Unauthorized. Please log in to join the queue." }, { status: 401 });
         }
 
         const body = await req.json();
-        const { businessId, serviceId, notes, customerName } = body;
+        const { businessId, customerName } = body;
 
         if (!businessId) {
             return NextResponse.json({ message: "Business ID is required" }, { status: 400 });
         }
 
-        const business = await Business.findById(businessId);
+        const business = await Business.findOne({ _id: businessId, isVerified: true });
         if (!business) {
             return NextResponse.json({ message: "Business not found" }, { status: 404 });
         }
@@ -68,13 +71,23 @@ export async function POST(req: Request) {
         // Use the provided customerName or fallback to the user's name from DB if we fetched it, 
         // currently user id is available via token payload. 
         // A simple fallback is "Registered Customer" if name is not explicitly provided in request.
-        const nameToUse = customerName || "Customer";
+        const nameToUse = typeof customerName === "string" && customerName.trim()
+            ? customerName.trim().slice(0, 100)
+            : "Customer";
+
+        const existingQueue = await Queue.exists({
+            business: business._id,
+            user: user.id,
+            status: { $in: ["waiting", "serving"] }
+        });
+        if (existingQueue) {
+            return NextResponse.json({ message: "You are already in this queue" }, { status: 409 });
+        }
 
         const newQueueItem = await Queue.create({
             business: business._id,
             user: user.id, // Linking the queue item to the registered customer
             name: nameToUse,
-            service: serviceId || null,
             status: "waiting",
             joinedAt: new Date(),
         });

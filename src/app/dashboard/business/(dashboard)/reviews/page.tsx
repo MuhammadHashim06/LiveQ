@@ -119,7 +119,7 @@ export default function BusinessReviewsPage() {
                         <div className="relative">
                             <MessageSquare className="absolute -top-1 -left-1 w-8 h-8 text-red-50/50 -z-10 group-hover:scale-110 transition-transform" />
                             <p className="text-gray-600 text-sm italic leading-relaxed">
-                                "{review.comment || 'No comment provided.'}"
+                                &quot;{review.comment || 'No comment provided.'}&quot;
                             </p>
                         </div>
                     </div>

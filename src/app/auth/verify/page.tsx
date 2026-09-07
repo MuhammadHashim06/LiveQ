@@ -31,7 +31,7 @@ function VerifyContent() {
         if (firstEmptyIndex !== -1 && inputRefs.current[firstEmptyIndex]) {
             inputRefs.current[firstEmptyIndex]?.focus();
         }
-    }, [email])
+    }, [email, otp])
 
     const handleOtpChange = (index: number, value: string) => {
         if (value.length > 1) {
@@ -165,7 +165,7 @@ function VerifyContent() {
 
                 <h1 className="text-3xl font-black text-gray-900 tracking-tight mb-2">Check your email</h1>
                 <p className="text-gray-500 mb-8 leading-relaxed font-medium">
-                    We've sent a 6-digit verification code to <span className="font-bold text-gray-800">{email || "your email address"}</span>.
+                    We&apos;ve sent a 6-digit verification code to <span className="font-bold text-gray-800">{email || "your email address"}</span>.
                 </p>
 
                 <form onSubmit={handleVerify} className="space-y-6">
@@ -219,7 +219,7 @@ function VerifyContent() {
 
                     <div className="text-center pt-4 border-t border-gray-100">
                         <p className="text-sm text-gray-500 font-medium">
-                            Didn't receive the code?{" "}
+                            Didn&apos;t receive the code?{" "}
                             <button
                                 type="button"
                                 onClick={handleResend}

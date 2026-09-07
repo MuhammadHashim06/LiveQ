@@ -3,8 +3,7 @@ import dbConnect from "@/lib/dbConnect";
 import User from "@/models/User";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
-
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
+import { JWT_SECRET } from "@/lib/auth";
 
 export async function GET(req: Request) {
     try {
@@ -26,7 +25,7 @@ export async function GET(req: Request) {
         // Convert to CSV
         const headers = ["ID", "Name", "Email", "Role", "Joined Date"];
         const rows = users.map(user => [
-            user._id.toString(),
+            String(user._id),
             `"${user.name || ''}"`,
             user.email,
             user.role,

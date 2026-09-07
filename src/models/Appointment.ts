@@ -6,6 +6,7 @@ export interface IAppointment extends Document {
   serviceName: string; // Storing name snapshot or reference
   scheduledTime: Date;
   status: "pending" | "confirmed" | "completed" | "cancelled";
+  checkedInAt?: Date;
   earlyArrivalRequested?: boolean;
   notes?: string;
 }
@@ -22,6 +23,7 @@ const AppointmentSchema: Schema = new Schema(
       default: "pending"
     },
     earlyArrivalRequested: { type: Boolean, default: false },
+    checkedInAt: { type: Date },
     notes: { type: String }
   },
   { timestamps: true }

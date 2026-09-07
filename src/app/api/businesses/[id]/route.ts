@@ -11,7 +11,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         // 1. Get the business object
         // Fetch public data only (name, email, category, address, phone, lat, lng, services)
         // Ensure you omit private owner data if necessary 
-        const business = await Business.findById(resolvedParams.id).lean();
+        const business = await Business.findOne({ _id: resolvedParams.id, isVerified: true })
+            .select("name category address email phone website logoUrl services availability lat lng stats isVerified")
+            .lean();
 
         if (!business) {
             return NextResponse.json({ message: "Business not found" }, { status: 404 });

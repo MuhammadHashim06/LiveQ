@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import cloudinary from "@/lib/cloudinary";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
-
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
+import { JWT_SECRET } from "@/lib/auth";
 
 export async function POST(req: Request) {
     try {
@@ -20,6 +19,14 @@ export async function POST(req: Request) {
 
         if (!file) {
             return NextResponse.json({ message: "No file provided" }, { status: 400 });
+        }
+
+        const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+        if (!allowedTypes.has(file.type)) {
+            return NextResponse.json({ message: "Only JPEG, PNG, and WebP images are allowed" }, { status: 400 });
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            return NextResponse.json({ message: "Image must be 5 MB or smaller" }, { status: 413 });
         }
 
         // Convert the File object to a Buffer

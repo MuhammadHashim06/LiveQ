@@ -5,7 +5,7 @@ import Queue from "@/models/Queue";
 import Appointment from "@/models/Appointment";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
+import { JWT_SECRET } from "@/lib/auth";
 
 export async function GET(req: Request) {
     try {
@@ -15,6 +15,7 @@ export async function GET(req: Request) {
         if (!token) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
         const payload = jwt.verify(token, JWT_SECRET) as any;
+        if (payload.role !== "business") return NextResponse.json({ message: "Business access only" }, { status: 403 });
 
         const business = await Business.findOne({ owner: payload.id });
         if (!business) return NextResponse.json({ message: "Business not found" }, { status: 404 });

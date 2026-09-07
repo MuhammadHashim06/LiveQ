@@ -5,15 +5,18 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { sendEmail, verifyEmailTemplate } from "@/lib/email";
-
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
+import { JWT_SECRET } from "@/lib/auth";
 
 export async function POST(req: Request) {
     try {
         await dbConnect();
         const { email, password } = await req.json();
+        if (typeof email !== "string" || typeof password !== "string") {
+            return NextResponse.json({ message: "Email and password are required" }, { status: 400 });
+        }
 
-        const user = await User.findOne({ email });
+        const normalizedEmail = email.trim().toLowerCase();
+        const user = await User.findOne({ email: normalizedEmail });
         if (!user) {
             return NextResponse.json({ message: "Invalid credentials" }, { status: 401 });
         }
@@ -28,7 +31,7 @@ export async function POST(req: Request) {
         // We allow undefined/null to pass for backwards compatibility with old accounts.
         if (user.isEmailVerified === false) {
             // 1. Generate a new 6-digit OTP
-            const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+            const otpCode = crypto.randomInt(100000, 1000000).toString();
             const hashedVerificationToken = crypto.createHash('sha256').update(otpCode).digest('hex');
 
             // 2. Set new expiration to 15 minutes from now
@@ -38,6 +41,8 @@ export async function POST(req: Request) {
             // 3. Update user and save
             user.verifyEmailToken = hashedVerificationToken;
             user.verifyEmailExpire = verifyEmailExpire;
+            user.verifyAttempts = 0;
+            user.verifyLastSentAt = new Date();
             await user.save();
 
             // 4. Send the email with the OTP code (Async)
@@ -80,6 +85,7 @@ export async function POST(req: Request) {
         response.cookies.set("token", token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
             maxAge: 60 * 60 * 24, // 1 day
             path: "/",
         });

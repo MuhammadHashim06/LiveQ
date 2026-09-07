@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useCallback, useEffect, useState, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { Building2, MapPin, Users, Star, Clock, User as UserIcon, RefreshCw } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -48,7 +48,7 @@ export default function BusinessDetailPage() {
     const [isJoiningQueue, setIsJoiningQueue] = useState(false)
     const [bookingName, setBookingName] = useState('')
 
-    const fetchBusinessData = async () => {
+    const fetchBusinessData = useCallback(async () => {
         try {
             const [bizRes, queueRes] = await Promise.all([
                 fetch(`/api/businesses/${businessId}`),
@@ -93,7 +93,7 @@ export default function BusinessDetailPage() {
             setLoading(false)
             setIsRefreshing(false)
         }
-    }
+    }, [businessId])
 
     const handleManualRefresh = () => {
         setIsRefreshing(true)
@@ -111,7 +111,7 @@ export default function BusinessDetailPage() {
 
             return () => clearInterval(interval)
         }
-    }, [businessId])
+    }, [businessId, fetchBusinessData])
 
     const handleJoinQueue = async (e: React.FormEvent) => {
         e.preventDefault()

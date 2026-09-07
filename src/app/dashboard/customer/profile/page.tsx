@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import Image from "next/image"
 import { User, Mail, Phone, Save, Loader2, Camera, Lock, Eye, EyeOff } from "lucide-react"
 import toast from "react-hot-toast"
 
@@ -123,7 +124,7 @@ export default function ProfilePage() {
             <div className="relative w-32 h-32 mx-auto mb-4 group">
               <div className="w-full h-full bg-red-50 text-red-600 rounded-full flex items-center justify-center border-4 border-white shadow-xl overflow-hidden">
                 {form.profileImage ? (
-                  <img src={form.profileImage} alt="Profile" className="w-full h-full object-cover" />
+                  <Image src={form.profileImage} alt="Profile" fill unoptimized className="object-cover" />
                 ) : (
                   <User className="w-12 h-12" />
                 )}

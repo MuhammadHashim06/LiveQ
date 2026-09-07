@@ -13,7 +13,7 @@ export async function GET(req: Request) {
         await dbConnect();
 
         const user = await getUser();
-        if (!user) {
+        if (!user || user.role !== "business") {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
         }
 
@@ -39,7 +39,7 @@ export async function PATCH(req: Request) {
         await dbConnect();
 
         const user = await getUser();
-        if (!user) {
+        if (!user || user.role !== "business") {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
         }
 
@@ -50,15 +50,16 @@ export async function PATCH(req: Request) {
         }
 
         const { appointmentId, status } = await req.json();
+        const allowedStatuses = ["pending", "confirmed", "completed", "cancelled"];
 
-        if (!appointmentId || !status) {
+        if (!appointmentId || !allowedStatuses.includes(status)) {
             return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
         }
 
         const appointment = await Appointment.findOneAndUpdate(
             { _id: appointmentId, business: business._id },
             { $set: { status } },
-            { new: true }
+            { new: true, runValidators: true }
         ).populate('user', 'name');
 
         if (!appointment) {

@@ -3,8 +3,7 @@ import dbConnect from "@/lib/dbConnect";
 import Business from "@/models/Business";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
-
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
+import { JWT_SECRET } from "@/lib/auth";
 
 async function getBusinessForOwner() {
     const cookieStore = await cookies();
@@ -12,6 +11,7 @@ async function getBusinessForOwner() {
     if (!token) return null;
     try {
         const payload = jwt.verify(token, JWT_SECRET) as any;
+        if (payload.role !== "business") return null;
         return await Business.findOne({ owner: payload.id });
     } catch {
         return null;

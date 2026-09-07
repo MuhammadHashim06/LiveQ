@@ -13,7 +13,7 @@ export async function POST(req: Request) {
         await dbConnect();
 
         const user = await getUser();
-        if (!user) {
+        if (!user || user.role !== "business") {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
         }
 
@@ -28,42 +28,39 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: "Business not found" }, { status: 404 });
         }
 
-        const appointment = await Appointment.findOne({ _id: appointmentId, business: business._id });
+        const appointment = await Appointment.findOne({
+            _id: appointmentId,
+            business: business._id,
+            status: "confirmed",
+            checkedInAt: { $exists: false }
+        });
         if (!appointment) {
             return NextResponse.json({ message: "Appointment not found" }, { status: 404 });
         }
 
-        // Prevent double check-ins
-        if (appointment.status === 'completed') {
-            return NextResponse.json({ message: "Appointment is already completed/checked-in" }, { status: 400 });
-        }
-
-        // Determine Position
-        let newPosition = 1;
-        if (!priority) {
-            // Put them at the end of the line
-            const lastInQueue = await Queue.findOne({ business: business._id, status: 'waiting' }).sort('-position');
-            newPosition = lastInQueue ? (lastInQueue.position || 0) + 1 : 1;
-        } else {
-            // Push everyone else down (VIP insertion at position 1)
-            await Queue.updateMany(
-                { business: business._id, status: 'waiting' },
-                { $inc: { position: 1 } }
-            );
-        }
+        const waitingQueue = await Queue.find({ business: business._id, status: "waiting" })
+            .sort({ sortOrder: 1, joinedAt: 1 })
+            .select("sortOrder")
+            .lean();
+        const firstSortOrder = waitingQueue[0]?.sortOrder;
+        const lastSortOrder = waitingQueue[waitingQueue.length - 1]?.sortOrder;
+        const newSortOrder = priority
+            ? (firstSortOrder ?? Date.now()) - 1
+            : (lastSortOrder ?? Date.now()) + 1;
+        const newPosition = priority ? 1 : waitingQueue.length + 1;
 
         // Create the Queue Ticket
         const newQueueItem = await Queue.create({
             business: business._id,
             user: appointment.user,
+            appointment: appointment._id,
             name: `(Apt) ${appointment.serviceName}`, // Visually denote it's from an appointment
             status: "waiting",
-            position: newPosition,
-            estimatedWaitTime: priority ? 0 : (newPosition - 1) * 15
+            sortOrder: newSortOrder
         });
 
-        // Mark Appointment as Completed (since it's now in the live queue)
-        appointment.status = 'completed';
+        // Keep the appointment confirmed until the queue item is completed.
+        appointment.checkedInAt = new Date();
         await appointment.save();
 
         // Notify the Customer

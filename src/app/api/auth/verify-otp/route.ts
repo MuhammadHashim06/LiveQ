@@ -3,29 +3,35 @@ import dbConnect from "@/lib/dbConnect";
 import User from "@/models/User";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
-
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
+import { JWT_SECRET } from "@/lib/auth";
 
 export async function POST(req: Request) {
     try {
         await dbConnect();
         const { email, otp } = await req.json();
 
-        if (!email || !otp) {
+        if (typeof email !== "string" || typeof otp !== "string" || !/^\d{6}$/.test(otp)) {
             return NextResponse.json({ message: "Email and OTP are required" }, { status: 400 });
         }
+
+        const normalizedEmail = email.trim().toLowerCase();
 
         // 1. Get hashed OTP from the plaintext OTP
         const hashedVerificationToken = crypto.createHash('sha256').update(otp).digest('hex');
 
         // 2. Find user with that token (and email) and ensure it hasn't expired
         const user = await User.findOne({
-            email,
+            email: normalizedEmail,
             verifyEmailToken: hashedVerificationToken,
-            verifyEmailExpire: { $gt: Date.now() }
+            verifyEmailExpire: { $gt: Date.now() },
+            $or: [{ verifyAttempts: { $lt: 5 } }, { verifyAttempts: { $exists: false } }]
         });
 
         if (!user) {
+            await User.updateOne(
+                { email: normalizedEmail, isEmailVerified: false, verifyEmailExpire: { $gt: Date.now() }, $or: [{ verifyAttempts: { $lt: 5 } }, { verifyAttempts: { $exists: false } }] },
+                { $inc: { verifyAttempts: 1 } }
+            );
             return NextResponse.json({ message: "Invalid or expired verification code" }, { status: 400 });
         }
 
@@ -33,6 +39,7 @@ export async function POST(req: Request) {
         user.isEmailVerified = true;
         user.verifyEmailToken = undefined;
         user.verifyEmailExpire = undefined;
+        user.verifyAttempts = 0;
         await user.save();
 
         // 4. Generate a JWT token to log the user in directly
@@ -63,6 +70,7 @@ export async function POST(req: Request) {
         response.cookies.set("token", token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
             maxAge: 60 * 60 * 24, // 1 day
             path: "/",
         });

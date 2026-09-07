@@ -24,6 +24,7 @@ export interface IBusiness extends Document {
   phone?: string;
   website?: string;
   logoUrl?: string;
+  timezone?: string;
   isVerified: boolean;
   services: IService[];
   availability: IAvailability[];
@@ -60,6 +61,7 @@ const BusinessSchema: Schema = new Schema(
     phone: { type: String },
     website: { type: String },
     logoUrl: { type: String },
+    timezone: { type: String, default: "Asia/Karachi" },
     isVerified: { type: Boolean, default: false },
     services: [ServiceSchema],
     availability: [AvailabilitySchema],

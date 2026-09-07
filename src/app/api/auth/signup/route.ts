@@ -10,11 +10,24 @@ export async function POST(req: Request) {
         await dbConnect();
         const { name, email, password, role } = await req.json();
 
-        if (!name || !email || !password || !role) {
+        if (typeof name !== "string" || typeof email !== "string" || typeof password !== "string" || !role) {
             return NextResponse.json({ message: "All fields are required" }, { status: 400 });
         }
 
-        const existingUser = await User.findOne({ email });
+        if (name.trim().length < 2 || name.length > 100 || password.length < 8) {
+            return NextResponse.json({ message: "Name must be 2-100 characters and password must be at least 8 characters" }, { status: 400 });
+        }
+
+        if (role !== "customer" && role !== "business") {
+            return NextResponse.json({ message: "Invalid role" }, { status: 400 });
+        }
+
+        const normalizedEmail = email.trim().toLowerCase();
+        if (!normalizedEmail.includes("@") || normalizedEmail.length > 254) {
+            return NextResponse.json({ message: "Invalid email address" }, { status: 400 });
+        }
+
+        const existingUser = await User.findOne({ email: normalizedEmail });
         if (existingUser) {
             return NextResponse.json({ message: "User already exists" }, { status: 400 });
         }
@@ -22,7 +35,7 @@ export async function POST(req: Request) {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Generate 6-digit OTP
-        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpCode = crypto.randomInt(100000, 1000000).toString();
         const hashedVerificationToken = crypto.createHash('sha256').update(otpCode).digest('hex');
 
         // Set expiration to 15 minutes from now
@@ -30,13 +43,15 @@ export async function POST(req: Request) {
         verifyEmailExpire.setMinutes(verifyEmailExpire.getMinutes() + 15);
 
         const newUser = await User.create({
-            name,
-            email,
+            name: name.trim(),
+            email: normalizedEmail,
             password: hashedPassword,
             role,
             isEmailVerified: false,
             verifyEmailToken: hashedVerificationToken,
-            verifyEmailExpire: verifyEmailExpire
+            verifyEmailExpire: verifyEmailExpire,
+            verifyAttempts: 0,
+            verifyLastSentAt: new Date()
         });
 
         // Send Verification Email asynchronously

@@ -11,26 +11,28 @@ export async function POST(req: Request) {
         await dbConnect();
 
         const user = await getUser();
-        if (!user) {
+        if (!user || user.role !== "customer") {
             return NextResponse.json({ message: "Unauthorized. Please log in to book an appointment." }, { status: 401 });
         }
 
-        const { businessId, service, scheduledTime: scheduledTimeISO, date, time } = await req.json();
+        const { businessId, service, scheduledTime: scheduledTimeISO } = await req.json();
 
-        if (!businessId || !service || (!scheduledTimeISO && (!date || !time))) {
+        if (!businessId || !service || typeof scheduledTimeISO !== "string") {
             return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
         }
 
-        const business = await Business.findById(businessId);
+        const business = await Business.findOne({ _id: businessId, isVerified: true });
         if (!business) {
             return NextResponse.json({ message: "Business not found" }, { status: 404 });
         }
 
-        // Prefer the pre-converted ISO string from the browser (correct timezone).
-        // Fall back to the old date+time combination for backward compatibility.
-        const scheduledTime = scheduledTimeISO
-            ? new Date(scheduledTimeISO)
-            : new Date(`${date}T${time}:00`);
+        const serviceName = typeof service === "string" ? service.trim() : "";
+        if (!serviceName || !business.services.some((item: { name: string }) => item.name === serviceName)) {
+            return NextResponse.json({ message: "Invalid service" }, { status: 400 });
+        }
+
+        // The client must send an ISO timestamp with its timezone offset.
+        const scheduledTime = new Date(scheduledTimeISO);
 
         if (isNaN(scheduledTime.getTime())) {
             return NextResponse.json({ message: "Invalid date or time provided" }, { status: 400 });
@@ -44,11 +46,27 @@ export async function POST(req: Request) {
         }
 
         // --- Availability Enforcement ---
-        // Map JS day index (0=Sun) to day names matching the Business model
+        // Availability is local to the business, not to the server process.
         const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-        const requestedDayName = dayNames[scheduledTime.getDay()];
-        const requestedHH = scheduledTime.getHours();
-        const requestedMM = scheduledTime.getMinutes();
+        const timezone = business.timezone || "Asia/Karachi";
+        let localTime: Record<string, string>;
+        try {
+            localTime = Object.fromEntries(
+                new Intl.DateTimeFormat("en-US", {
+                    timeZone: timezone,
+                    weekday: "long",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hourCycle: "h23"
+                }).formatToParts(scheduledTime).map(({ type, value }) => [type, value])
+            );
+        } catch {
+            return NextResponse.json({ message: "Business timezone is invalid" }, { status: 400 });
+        }
+
+        const requestedDayName = localTime.weekday || dayNames[scheduledTime.getUTCDay()];
+        const requestedHH = Number(localTime.hour);
+        const requestedMM = Number(localTime.minute);
         const requestedMinutes = requestedHH * 60 + requestedMM;
 
         if (business.availability && business.availability.length > 0) {
@@ -79,10 +97,20 @@ export async function POST(req: Request) {
         // --------------------------------
 
 
+        const existingAppointment = await Appointment.exists({
+            business: businessId,
+            user: user.id,
+            scheduledTime,
+            status: { $in: ["pending", "confirmed"] }
+        });
+        if (existingAppointment) {
+            return NextResponse.json({ message: "You already have an appointment at this time" }, { status: 409 });
+        }
+
         const appointment = await Appointment.create({
             business: businessId,
             user: user.id,
-            serviceName: service,
+            serviceName,
             scheduledTime,
             status: "pending"
         });
@@ -92,7 +120,7 @@ export async function POST(req: Request) {
             recipient: business.owner,
             type: "system",
             title: "New Appointment Request",
-            message: `${user.name || 'A customer'} requested an appointment for ${service} on ${scheduledTime.toLocaleDateString()} at ${scheduledTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`,
+            message: `${user.name || 'A customer'} requested an appointment for ${serviceName} on ${scheduledTime.toLocaleDateString()} at ${scheduledTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`,
             link: "/dashboard/business/appointments"
         });
 
@@ -104,7 +132,7 @@ export async function POST(req: Request) {
                 html: appointmentConfirmationTemplate(
                     user.name || "Customer",
                     business.name,
-                    service,
+                    serviceName,
                     scheduledTime.toISOString()
                 )
             }).catch(err => console.error("Failed to send appointment email:", err));

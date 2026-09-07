@@ -20,7 +20,7 @@ export default function NotFound() {
                     <h2 className="text-2xl md:text-3xl font-bold text-gray-800 tracking-tight mb-4">Page Not Found</h2>
 
                     <p className="text-gray-500 mb-10 leading-relaxed font-medium">
-                        Oops! The page you're looking for seems to have wandered off. It might have been moved, deleted, or perhaps never existed.
+                        Oops! The page you&apos;re looking for seems to have wandered off. It might have been moved, deleted, or perhaps never existed.
                     </p>
 
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

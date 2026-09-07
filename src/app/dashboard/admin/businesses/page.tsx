@@ -265,7 +265,7 @@ export default function AdminBusinessesPage() {
                                                 <Star className="w-3 h-3 text-amber-400 fill-current" />
                                             </div>
                                         </div>
-                                        <p className="text-sm text-gray-600 font-medium italic">"{r.comment || "No comment provided."}"</p>
+                                        <p className="text-sm text-gray-600 font-medium italic">&quot;{r.comment || "No comment provided."}&quot;</p>
                                         <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-4 flex items-center gap-1">
                                             <Calendar className="w-3 h-3" /> Submitted {new Date(r.createdAt).toLocaleDateString()}
                                         </p>

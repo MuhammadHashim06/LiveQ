@@ -1,7 +1,9 @@
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
+export const JWT_SECRET: string = process.env.JWT_SECRET ?? (() => {
+    throw new Error("JWT_SECRET is required");
+})();
 
 export interface DecodedUser {
     id: string;
@@ -16,7 +18,7 @@ export async function getUser(): Promise<DecodedUser | null> {
     if (!token) return null;
 
     try {
-        const decoded = jwt.verify(token, JWT_SECRET) as any;
+        const decoded = jwt.verify(token, JWT_SECRET) as unknown as DecodedUser;
         return decoded;
     } catch (err) {
         return null;

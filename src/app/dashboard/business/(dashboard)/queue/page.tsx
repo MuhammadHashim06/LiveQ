@@ -22,6 +22,7 @@ interface AppointmentItem {
   scheduledTime: string
   status: string
   earlyArrivalRequested?: boolean
+  checkedInAt?: string
 }
 
 export default function QueuePage() {
@@ -228,7 +229,7 @@ export default function QueuePage() {
 
   // Filter today's confirmed appointments
   const todaysAppointments = appointments.filter((a: AppointmentItem) => {
-    if (a.status !== 'confirmed') return false;
+    if (a.status !== 'confirmed' || a.checkedInAt) return false;
     const apptDate = new Date(a.scheduledTime).toDateString();
     const today = new Date().toDateString();
     return apptDate === today;

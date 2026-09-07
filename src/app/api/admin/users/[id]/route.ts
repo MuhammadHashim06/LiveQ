@@ -3,8 +3,7 @@ import dbConnect from "@/lib/dbConnect";
 import User from "@/models/User";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
-
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
+import { JWT_SECRET } from "@/lib/auth";
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
@@ -24,7 +23,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
         const { id } = await params;
 
         // Prevent deleting oneself
-        if (payload.userId === id) {
+        if (payload.id === id) {
             return NextResponse.json({ message: "Cannot delete your own admin account" }, { status: 400 });
         }
 

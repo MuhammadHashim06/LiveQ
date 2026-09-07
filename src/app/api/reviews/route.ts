@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Review from "@/models/Review";
 import Business from "@/models/Business";
+import Appointment from "@/models/Appointment";
+import Queue from "@/models/Queue";
 import NotificationModel from "@/models/Notification";
 import { getUser } from "@/lib/auth";
 
@@ -17,7 +19,7 @@ export async function POST(req: Request) {
         const body = await req.json();
         const { businessId, rating, comment } = body;
 
-        if (!businessId || !rating || rating < 1 || rating > 5) {
+        if (!businessId || typeof rating !== "number" || rating < 1 || rating > 5) {
             return NextResponse.json({ message: "Invalid payload: rating 1-5 and businessId required" }, { status: 400 });
         }
 
@@ -25,6 +27,14 @@ export async function POST(req: Request) {
         const business = await Business.findById(businessId);
         if (!business) {
             return NextResponse.json({ message: "Business not found" }, { status: 404 });
+        }
+
+        const [completedAppointment, completedQueue] = await Promise.all([
+            Appointment.exists({ business: businessId, user: user.id, status: "completed" }),
+            Queue.exists({ business: businessId, user: user.id, status: "completed" })
+        ]);
+        if (!completedAppointment && !completedQueue) {
+            return NextResponse.json({ message: "You can review a business after a completed visit" }, { status: 403 });
         }
 
         // Upsert the review to ensure 1 review per user per business
@@ -83,7 +93,7 @@ export async function GET(req: Request) {
             userId = authUser?.id || null;
         }
 
-        let filter: any = {};
+        const filter: any = {};
         if (businessId) filter.business = businessId;
         if (userId) filter.user = userId;
 

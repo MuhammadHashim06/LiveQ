@@ -160,7 +160,7 @@ export default function BusinessAppointmentsPage() {
         <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
           <CalendarIcon className="w-16 h-16 text-gray-200 mx-auto mb-4" />
           <h3 className="text-xl font-bold text-gray-900">No appointments found</h3>
-          <p className="text-gray-500 mt-2">When customers book slots, they'll appear here.</p>
+          <p className="text-gray-500 mt-2">When customers book slots, they&apos;ll appear here.</p>
         </div>
       )}
     </div>

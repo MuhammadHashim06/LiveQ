@@ -25,7 +25,7 @@ export default function GlobalErrorUI({
             </div>
             <h1 className="text-3xl font-black text-gray-900 tracking-tight mb-2">Something went wrong!</h1>
             <p className="text-gray-500 font-medium mb-8 max-w-md mx-auto">
-                An unexpected error occurred and we've been notified.
+                An unexpected error occurred and we&apos;ve been notified.
                 {process.env.NODE_ENV === "development" && (
                     <span className="block mt-2 text-xs text-red-500 font-mono text-left bg-red-50 p-3 rounded-lg border border-red-100">{error.message}</span>
                 )}

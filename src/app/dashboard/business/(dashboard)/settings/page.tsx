@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import Image from "next/image"
 import { Building2, Mail, Phone, MapPin, Globe, Save, Loader2, Image as ImageIcon } from "lucide-react"
 import toast from "react-hot-toast"
 
@@ -124,7 +125,7 @@ export default function BusinessSettingsPage() {
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm text-center">
             <div className="w-24 h-24 bg-red-50 text-red-600 rounded-3xl flex items-center justify-center mx-auto mb-4 border-4 border-white shadow-xl overflow-hidden relative group">
               {form.logoUrl ? (
-                <img src={form.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                <Image src={form.logoUrl} alt="Logo" fill unoptimized className="object-cover" />
               ) : (
                 <Building2 className="w-10 h-10" />
               )}

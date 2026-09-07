@@ -12,6 +12,8 @@ export interface IUser extends Document {
   isEmailVerified: boolean;
   verifyEmailToken?: string;
   verifyEmailExpire?: Date;
+  verifyAttempts: number;
+  verifyLastSentAt?: Date;
 }
 
 const UserSchema: Schema = new Schema(
@@ -27,6 +29,8 @@ const UserSchema: Schema = new Schema(
     isEmailVerified: { type: Boolean, default: false },
     verifyEmailToken: { type: String },
     verifyEmailExpire: { type: Date },
+    verifyAttempts: { type: Number, default: 0 },
+    verifyLastSentAt: { type: Date },
   },
   { timestamps: true }
 );

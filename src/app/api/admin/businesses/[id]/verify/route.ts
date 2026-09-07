@@ -5,8 +5,7 @@ import User from "@/models/User";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 import { sendEmail, businessVerificationTemplate } from "@/lib/email";
-
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
+import { JWT_SECRET } from "@/lib/auth";
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
