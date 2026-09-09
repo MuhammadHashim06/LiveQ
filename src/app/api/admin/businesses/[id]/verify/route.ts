@@ -79,6 +79,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         return NextResponse.json({ message: `Business ${isVerified ? 'verified' : 'unverified'} successfully`, business });
     } catch (error: any) {
         console.error("Admin Verify API error:", error.message);
-        return NextResponse.json({ message: error.message }, { status: 500 });
+        return NextResponse.json({ message: "Internal server error" }, { status: 500 });
     }
 }

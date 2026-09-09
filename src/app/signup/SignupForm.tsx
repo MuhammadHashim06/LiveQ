@@ -95,9 +95,9 @@ import { User, Mail, Lock, Building, ArrowRight, Eye, EyeOff, ChevronDown } from
 import CustomSelect from "@/components/ui/CustomSelect"
 import toast from "react-hot-toast"
 
-export default function SignupForm() {
+export default function SignupForm({ initialRole = "customer" }: { initialRole?: "customer" | "business" }) {
   const router = useRouter()
-  const [form, setForm] = useState({ name: "", email: "", password: "", role: "customer" })
+  const [form, setForm] = useState({ name: "", email: "", password: "", role: initialRole })
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -224,12 +224,15 @@ export default function SignupForm() {
                   name="password"
                   value={form.password}
                   onChange={handleChange}
+                  minLength={8}
+                  maxLength={128}
                   placeholder="••••••••"
                   required
                   className="w-full pl-10 pr-12 py-3 border border-gray-200 rounded-xl focus:ring-4 focus:ring-red-500/10 focus:border-red-500 outline-none transition-all placeholder:text-gray-400"
                 />
                 <button
                   type="button"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-red-500 transition-colors"
                 >
@@ -241,7 +244,7 @@ export default function SignupForm() {
             <CustomSelect
               label="I am a"
               value={form.role}
-              onChange={(val) => setForm({ ...form, role: val })}
+              onChange={(val) => setForm({ ...form, role: val as "customer" | "business" })}
               options={[
                 { value: "customer", label: "Customer" },
                 { value: "business", label: "Business Owner" },

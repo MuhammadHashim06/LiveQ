@@ -15,7 +15,7 @@ export async function GET(req: Request) {
         return NextResponse.json(business);
     } catch (error: any) {
         console.error("GET /api/business/me Error:", error);
-        return NextResponse.json({ message: error.message }, { status: 500 });
+        return NextResponse.json({ message: "Internal server error" }, { status: 500 });
     }
 }
 
@@ -60,6 +60,6 @@ export async function PUT(req: Request) {
         return NextResponse.json(updatedBusiness);
     } catch (error: any) {
         console.error("PUT /api/business/me Error:", error);
-        return NextResponse.json({ message: error.message }, { status: 500 });
+        return NextResponse.json({ message: "Internal server error" }, { status: 500 });
     }
 }

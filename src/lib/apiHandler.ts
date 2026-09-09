@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-type ApiHandler = (req: Request, context: any) => Promise<NextResponse> | NextResponse;
+type ApiHandler = (req: Request, context: unknown) => Promise<NextResponse> | NextResponse;
 
 /**
  * Global API Error Handling Middleware Wrapper
@@ -8,24 +8,20 @@ type ApiHandler = (req: Request, context: any) => Promise<NextResponse> | NextRe
  * standardize response shapes, and log server-side faults robustly.
  */
 export function withErrorHandling(handler: ApiHandler): ApiHandler {
-    return async (req: Request, context: any) => {
+    return async (req: Request, context: unknown) => {
         try {
             return await handler(req, context);
-        } catch (error: any) {
-            console.error(`[API ERROR] ${req.method} ${req.url}:`, error.message);
-            console.error(error.stack);
+        } catch (error: unknown) {
+            console.error(`[API ERROR] ${req.method} ${req.url}:`, error);
 
             // Log to external service like Sentry or Datadog here in the future
-
-            const isDev = process.env.NODE_ENV === "development";
 
             return NextResponse.json(
                 {
                     success: false,
-                    message: error.message || "An unexpected internal server error occurred.",
-                    ...(isDev && { stack: error.stack })
+                    message: "Internal server error"
                 },
-                { status: error.status || 500 }
+                { status: 500 }
             );
         }
     };

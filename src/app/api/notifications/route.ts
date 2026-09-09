@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Notification from "@/models/Notification";
-import { getUser } from "@/lib/auth";
+import { getUser, isSameOrigin } from "@/lib/auth";
 
 export async function GET(req: Request) {
     try {
@@ -20,7 +20,7 @@ export async function GET(req: Request) {
         return NextResponse.json(notifications);
     } catch (error: any) {
         console.error("GET /api/notifications error:", error);
-        return NextResponse.json({ message: error.message }, { status: 500 });
+        return NextResponse.json({ message: "Internal server error" }, { status: 500 });
     }
 }
 
@@ -28,6 +28,8 @@ export async function PATCH(req: Request) {
     // Mark ALL as read
     try {
         await dbConnect();
+
+        if (!isSameOrigin(req)) return NextResponse.json({ message: "Invalid origin" }, { status: 403 });
 
         const user = await getUser();
         if (!user) {
@@ -42,6 +44,6 @@ export async function PATCH(req: Request) {
         return NextResponse.json({ message: "All notifications marked as read" });
     } catch (error: any) {
         console.error("PATCH /api/notifications error:", error);
-        return NextResponse.json({ message: error.message }, { status: 500 });
+        return NextResponse.json({ message: "Internal server error" }, { status: 500 });
     }
 }

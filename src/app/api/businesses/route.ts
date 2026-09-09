@@ -23,7 +23,7 @@ export async function GET(req: Request) {
             .lean();
         return NextResponse.json(businesses);
     } catch (error: any) {
-        return NextResponse.json({ message: error.message }, { status: 500 });
+        return NextResponse.json({ message: "Internal server error" }, { status: 500 });
     }
 }
 
@@ -60,6 +60,6 @@ export async function POST(req: Request) {
 
         return NextResponse.json(newBusiness, { status: 201 });
     } catch (error: any) {
-        return NextResponse.json({ message: error.message }, { status: 500 });
+        return NextResponse.json({ message: "Internal server error" }, { status: 500 });
     }
 }

@@ -9,6 +9,7 @@ import {
 import CustomSelect from "@/components/ui/CustomSelect"
 import toast from "react-hot-toast"
 import { GoogleMap, Marker, LoadScript, Autocomplete } from '@react-google-maps/api'
+import MapFallback from '@/components/ui/MapFallback'
 
 const containerStyle = {
     width: '100%',
@@ -21,6 +22,7 @@ const defaultCenter = {
 }
 
 const libraries: ("places")[] = ['places']
+const mapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
 
 export default function BusinessOnboarding() {
     const router = useRouter()
@@ -261,7 +263,7 @@ export default function BusinessOnboarding() {
                                 <p className="text-gray-500 mt-2">Help customers find you easily. You can skip this and add it later.</p>
                             </div>
 
-                            <LoadScript googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!} libraries={libraries}>
+                            {mapsApiKey ? <LoadScript googleMapsApiKey={mapsApiKey} libraries={libraries}>
                                 <div className="mb-4">
                                     <div className="flex justify-between items-center mb-2">
                                         <label className="block text-sm font-medium text-gray-700">Address Info</label>
@@ -298,7 +300,7 @@ export default function BusinessOnboarding() {
                                         {hasSetLocation && <Marker position={mapCenter} />}
                                     </GoogleMap>
                                 </div>
-                            </LoadScript>
+                            </LoadScript> : <MapFallback />}
 
                             <div className="flex gap-4">
                                 <button

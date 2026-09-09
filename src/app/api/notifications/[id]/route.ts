@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Notification from "@/models/Notification";
-import { getUser } from "@/lib/auth";
+import { getUser, isSameOrigin } from "@/lib/auth";
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
     // Mark SINGLE notification as read
     try {
         await dbConnect();
+
+        if (!isSameOrigin(req)) return NextResponse.json({ message: "Invalid origin" }, { status: 403 });
         const resolvedParams = await params;
 
         const user = await getUser();
@@ -27,6 +29,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         return NextResponse.json(notification);
     } catch (error: any) {
         console.error(`PATCH /api/notifications/${params} error:`, error);
-        return NextResponse.json({ message: error.message }, { status: 500 });
+        return NextResponse.json({ message: "Internal server error" }, { status: 500 });
     }
 }

@@ -4,7 +4,14 @@ const MONGODB_URI = process.env.MONGODB_URI || "";
 
 if (!MONGODB_URI) throw new Error("Please define MONGODB_URI");
 
-const cached = (global as any).mongoose || { conn: null, promise: null };
+type MongooseCache = {
+  conn: typeof mongoose | null;
+  promise: Promise<typeof mongoose> | null;
+};
+
+const globalWithMongoose = globalThis as typeof globalThis & { mongoose?: MongooseCache };
+const cached = globalWithMongoose.mongoose ?? { conn: null, promise: null };
+globalWithMongoose.mongoose = cached;
 
 async function dbConnect() {
   if (cached.conn) return cached.conn;
@@ -14,7 +21,6 @@ async function dbConnect() {
     });
   }
   cached.conn = await cached.promise;
-  (global as any).mongoose = cached;
   return cached.conn;
 }
 

@@ -1,8 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Bell, Check, Trash } from 'lucide-react'
-import Link from 'next/link'
+import { Bell, Check } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useRealtime } from '@/lib/useRealtime'
 
@@ -97,7 +96,10 @@ export default function NotificationBell() {
     return (
         <div className="relative" ref={dropdownRef}>
             <button
+                type="button"
                 onClick={() => setIsOpen(!isOpen)}
+                aria-label="Notifications"
+                aria-expanded={isOpen}
                 className="p-2 relative text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors focus:outline-none"
             >
                 <Bell className="w-6 h-6" />
@@ -131,10 +133,11 @@ export default function NotificationBell() {
                         ) : (
                             <div className="divide-y divide-gray-50">
                                 {notifications.map(notif => (
-                                    <div
+                                    <button
+                                        type="button"
                                         key={notif._id}
                                         onClick={() => handleNotificationClick(notif)}
-                                        className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer ${!notif.read ? 'bg-blue-50/30' : ''}`}
+                                        className={`block w-full p-4 text-left hover:bg-gray-50 transition-colors ${!notif.read ? 'bg-blue-50/30' : ''}`}
                                     >
                                         <div className="flex gap-3">
                                             <div className="flex-1">
@@ -152,7 +155,7 @@ export default function NotificationBell() {
                                                 <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 flex-shrink-0"></div>
                                             )}
                                         </div>
-                                    </div>
+                                    </button>
                                 ))}
                             </div>
                         )}

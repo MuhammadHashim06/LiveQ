@@ -104,6 +104,6 @@ export async function POST(req: Request) {
         if (error?.code === 11000) {
             return NextResponse.json({ message: "This appointment is already checked in" }, { status: 409 });
         }
-        return NextResponse.json({ message: error.message }, { status: 500 });
+        return NextResponse.json({ message: "Internal server error" }, { status: 500 });
     }
 }

@@ -1,12 +1,18 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import toast from "react-hot-toast"
 import { Loader2 } from "lucide-react"
 
 export default function ResendVerificationButton() {
     const [loading, setLoading] = useState(false)
     const [cooldown, setCooldown] = useState(0)
+
+    useEffect(() => {
+        if (cooldown === 0) return
+        const timer = setTimeout(() => setCooldown((value) => Math.max(0, value - 1)), 1000)
+        return () => clearTimeout(timer)
+    }, [cooldown])
 
     const handleResend = async () => {
         if (cooldown > 0 || loading) return;
@@ -21,17 +27,7 @@ export default function ResendVerificationButton() {
 
             if (res.ok) {
                 toast.success("Verification email sent! Please check your inbox.");
-                // Start a 60 second cooldown
                 setCooldown(60);
-                const timer = setInterval(() => {
-                    setCooldown((prev) => {
-                        if (prev <= 1) {
-                            clearInterval(timer);
-                            return 0;
-                        }
-                        return prev - 1;
-                    });
-                }, 1000);
             } else {
                 toast.error(data.message || "Failed to resend email");
             }
@@ -44,6 +40,7 @@ export default function ResendVerificationButton() {
 
     return (
         <button
+            type="button"
             onClick={handleResend}
             disabled={loading || cooldown > 0}
             className={`text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg transition-colors ml-2 flex items-center gap-2 ${loading || cooldown > 0

@@ -3,7 +3,7 @@ import mongoose, { Schema, Document } from "mongoose"
 export interface IQueue extends Document {
   business: mongoose.Types.ObjectId;
   appointment?: mongoose.Types.ObjectId;
-  user: mongoose.Types.ObjectId;
+  user?: mongoose.Types.ObjectId;
   name?: string; // For guest users or quick add
   status: "waiting" | "serving" | "completed" | "removed" | "cancelled";
   joinedAt: Date;

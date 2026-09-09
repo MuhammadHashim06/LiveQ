@@ -16,6 +16,6 @@ export async function GET() {
         return NextResponse.json(businesses);
     } catch (error: any) {
         console.error("Admin Businesses API error:", error.message);
-        return NextResponse.json({ message: error.message }, { status: 500 });
+        return NextResponse.json({ message: "Internal server error" }, { status: 500 });
     }
 }

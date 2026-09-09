@@ -23,6 +23,6 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         return NextResponse.json(business);
 
     } catch (error: any) {
-        return NextResponse.json({ message: error.message }, { status: 500 });
+        return NextResponse.json({ message: "Internal server error" }, { status: 500 });
     }
 }

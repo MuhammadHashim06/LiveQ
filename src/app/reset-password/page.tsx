@@ -31,8 +31,8 @@ function ResetPasswordForm() {
         if (password !== confirmPassword) {
             return toast.error("Passwords do not match")
         }
-        if (password.length < 6) {
-            return toast.error("Password must be at least 6 characters")
+        if (password.length < 8) {
+            return toast.error("Password must be at least 8 characters")
         }
         if (!token) return
 
@@ -97,6 +97,8 @@ function ResetPasswordForm() {
                                     <input
                                         type={showPassword ? "text" : "password"}
                                         required
+                                        minLength={8}
+                                        maxLength={128}
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         className="appearance-none block w-full pl-11 pr-12 py-3.5 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 sm:text-sm transition-all shadow-sm"
@@ -104,6 +106,7 @@ function ResetPasswordForm() {
                                     />
                                     <button
                                         type="button"
+                                        aria-label={showPassword ? "Hide password" : "Show password"}
                                         onClick={() => setShowPassword(!showPassword)}
                                         className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-red-500 transition-colors"
                                     >
@@ -121,6 +124,8 @@ function ResetPasswordForm() {
                                     <input
                                         type={showConfirmPassword ? "text" : "password"}
                                         required
+                                        minLength={8}
+                                        maxLength={128}
                                         value={confirmPassword}
                                         onChange={(e) => setConfirmPassword(e.target.value)}
                                         className="appearance-none block w-full pl-11 pr-12 py-3.5 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 sm:text-sm transition-all shadow-sm"
@@ -128,6 +133,7 @@ function ResetPasswordForm() {
                                     />
                                     <button
                                         type="button"
+                                        aria-label={showConfirmPassword ? "Hide confirmation password" : "Show confirmation password"}
                                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                         className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-red-500 transition-colors"
                                     >

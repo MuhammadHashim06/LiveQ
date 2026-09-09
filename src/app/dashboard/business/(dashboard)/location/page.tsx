@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { GoogleMap, Marker, LoadScript, Autocomplete } from '@react-google-maps/api'
 import { Save, Navigation } from 'lucide-react'
 import { toast } from 'react-hot-toast' // Assuming toast exists or I'll remove it if not sure, but simple alert fallback is fine
+import MapFallback from '@/components/ui/MapFallback'
 
 const containerStyle = {
   width: '100%',
@@ -16,6 +17,7 @@ const defaultCenter = {
 }
 
 const libraries: ("places")[] = ['places']
+const mapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
 
 export default function LocationPage() {
   const [location, setLocation] = useState(defaultCenter)
@@ -143,7 +145,7 @@ export default function LocationPage() {
         </button>
       </div>
 
-      <LoadScript googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!} libraries={libraries}>
+      {mapsApiKey ? <LoadScript googleMapsApiKey={mapsApiKey} libraries={libraries}>
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6">
           <div className="flex justify-between items-center mb-2">
             <label className="block text-sm font-medium text-gray-700">Address (Optional)</label>
@@ -180,7 +182,7 @@ export default function LocationPage() {
             <Marker position={location} />
           </GoogleMap>
         </div>
-      </LoadScript>
+      </LoadScript> : <MapFallback />}
     </div>
   )
 }

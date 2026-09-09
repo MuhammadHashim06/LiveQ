@@ -75,6 +75,6 @@ export async function POST(req: Request) {
             user: { _id: newUser._id, name: newUser.name, email: newUser.email, role: newUser.role } // Avoid returning full object with hashed tokens
         }, { status: 201 });
     } catch (error: any) {
-        return NextResponse.json({ message: error.message || "Something went wrong" }, { status: 500 });
+        return NextResponse.json({ message: "Internal server error" }, { status: 500 });
     }
 }

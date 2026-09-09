@@ -6,6 +6,7 @@ import { Search, MapPin, Building2, Navigation2, Star, Users, Calendar, Clock, C
 import toast from 'react-hot-toast'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import MapFallback from '@/components/ui/MapFallback'
 
 // Haversine distance formula to calculate distance between two lat/lng points in km
 function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -29,6 +30,8 @@ const containerStyle = {
   width: '100%',
   height: '100%',
 }
+
+const mapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
 
 type Business = {
   _id: string
@@ -276,6 +279,15 @@ export default function BookAppointmentPage() {
                         setTime("");
                       }
                     }}
+                    onKeyDown={(event) => {
+                      if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
+                        event.preventDefault()
+                        setSelectedBusiness(biz)
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Select ${biz.name}`}
                     className={`bg-white rounded-2xl border transition-all cursor-pointer overflow-hidden ${selectedBusiness?._id === biz._id
                       ? 'border-red-500 shadow-lg shadow-red-100 ring-4 ring-red-50'
                       : 'border-gray-200 hover:border-red-300 hover:shadow-md'
@@ -391,7 +403,7 @@ export default function BookAppointmentPage() {
 
         {/* Right Content - Map */}
         <div className="hidden md:block w-2/3 lg:w-3/5 h-full relative relative z-0">
-          <LoadScript googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string}>
+          {mapsApiKey ? <LoadScript googleMapsApiKey={mapsApiKey}>
             <GoogleMap
               mapContainerStyle={containerStyle}
               center={mapCenter}
@@ -422,7 +434,7 @@ export default function BookAppointmentPage() {
                   onClick={() => setSelectedBusiness(biz)}
                   animation={selectedBusiness?._id === biz._id ? google.maps.Animation.BOUNCE : undefined}
                   icon={selectedBusiness?._id === biz._id ? undefined : {
-                    url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
+                    url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png"
                   }}
                 />
               ))}
@@ -450,23 +462,24 @@ export default function BookAppointmentPage() {
                 <Marker
                   position={userLocation}
                   icon={{
-                    url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+                    url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png"
                   }}
                   title="Your Location"
                 />
               )}
             </GoogleMap>
-          </LoadScript>
+          </LoadScript> : <MapFallback />}
 
           {/* Map Overlay Button (Sort by nearest floating) */}
           <div className="absolute top-4 right-4 z-[5]">
-            <button
+            {mapsApiKey && <button
               onClick={handleSortByNearest}
+              aria-label="Find nearest businesses"
               className="bg-white p-3 rounded-full shadow-lg border border-gray-100 text-gray-700 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-200 transition-all group"
               title="Find nearest to me"
             >
               <Navigation2 className="w-6 h-6 group-hover:fill-blue-500" />
-            </button>
+            </button>}
           </div>
         </div>
       </div>

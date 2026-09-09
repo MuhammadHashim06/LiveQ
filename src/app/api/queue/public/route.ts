@@ -46,7 +46,7 @@ export async function GET(req: Request) {
 
         return NextResponse.json({ count: queueCount });
     } catch (error: any) {
-        return NextResponse.json({ message: error.message }, { status: 500 });
+        return NextResponse.json({ message: "Internal server error" }, { status: 500 });
     }
 }
 
@@ -128,6 +128,6 @@ export async function POST(req: Request) {
         if (error?.code === 11000) {
             return NextResponse.json({ message: "You are already in this queue" }, { status: 409 });
         }
-        return NextResponse.json({ message: error.message }, { status: 500 });
+        return NextResponse.json({ message: "Internal server error" }, { status: 500 });
     }
 }

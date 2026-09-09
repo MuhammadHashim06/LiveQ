@@ -18,6 +18,6 @@ export async function GET(req: Request) {
         return NextResponse.json(users);
     } catch (error: any) {
         console.error("Admin Users API error:", error.message);
-        return NextResponse.json({ message: error.message }, { status: 500 });
+        return NextResponse.json({ message: "Internal server error" }, { status: 500 });
     }
 }

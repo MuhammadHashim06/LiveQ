@@ -58,6 +58,7 @@ import { Search, MapPin, Building2, Navigation2, Star, Users, Clock } from 'luci
 import toast from 'react-hot-toast'
 import Link from 'next/link'
 import { useRealtime } from '@/lib/useRealtime'
+import MapFallback from '@/components/ui/MapFallback'
 
 // Haversine distance formula to calculate distance between two lat/lng points in km
 function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -81,6 +82,8 @@ const containerStyle = {
   width: '100%',
   height: '100%',
 }
+
+const mapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
 
 type Business = {
   _id: string
@@ -330,6 +333,15 @@ export default function FindBusinessPage() {
               <div
                 key={biz._id}
                 onClick={() => setSelectedBusiness(biz)}
+                onKeyDown={(event) => {
+                  if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
+                    event.preventDefault()
+                    setSelectedBusiness(biz)
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+                aria-label={`Select ${biz.name}`}
                 className={`p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200 ${selectedBusiness?._id === biz._id
                   ? 'border-red-500 bg-red-50 shadow-md'
                   : 'border-transparent bg-white shadow-sm hover:shadow-md hover:border-red-200'
@@ -454,7 +466,7 @@ export default function FindBusinessPage() {
 
         {/* Right Content - Map */}
         <div className="w-full md:w-2/3 lg:w-3/5 h-1/2 md:h-full relative bg-gray-200">
-          <LoadScript googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!}>
+          {mapsApiKey ? <LoadScript googleMapsApiKey={mapsApiKey}>
             <GoogleMap
               mapContainerStyle={containerStyle}
               center={mapCenter}
@@ -471,7 +483,7 @@ export default function FindBusinessPage() {
                   key={biz._id}
                   position={{ lat: biz.lat, lng: biz.lng }}
                   onClick={() => setSelectedBusiness(biz)}
-                  icon={selectedBusiness?._id === biz._id ? undefined : "http://maps.google.com/mapfiles/ms/icons/red-dot.png"}
+                  icon={selectedBusiness?._id === biz._id ? undefined : "https://maps.google.com/mapfiles/ms/icons/red-dot.png"}
                 />
               ))}
 
@@ -487,12 +499,13 @@ export default function FindBusinessPage() {
                 </InfoWindow>
               )}
             </GoogleMap>
-          </LoadScript>
+          </LoadScript> : <MapFallback />}
 
           {/* Current Location FAB */}
-          <button
+          {mapsApiKey && <button
             className="absolute bottom-6 right-6 w-12 h-12 bg-white rounded-full shadow-lg border border-gray-100 flex items-center justify-center text-gray-600 hover:text-red-600 hover:bg-gray-50 transition-colors z-10"
             title="My Location"
+            aria-label="Use my location"
             onClick={() => {
               if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(position => {
@@ -504,7 +517,7 @@ export default function FindBusinessPage() {
             }}
           >
             <Navigation2 className="w-5 h-5" />
-          </button>
+          </button>}
         </div>
       </div>
     </>

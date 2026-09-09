@@ -42,10 +42,10 @@ export default function Home() {
             Eliminate waiting lines. LiveQ helps businesses manage queues efficiently and lets customers book, track, and arrive just in time.
           </p>
           <div className="flex justify-center gap-4">
-            <Link href="/signup" className="px-8 py-4 bg-red-600 text-white text-lg font-bold rounded-lg hover:bg-red-700 shadow-lg hover:shadow-xl transition transform hover:-translate-y-1">
+            <Link href="/signup?role=business" className="px-8 py-4 bg-red-600 text-white text-lg font-bold rounded-lg hover:bg-red-700 shadow-lg hover:shadow-xl transition transform hover:-translate-y-1">
               Join as Business
             </Link>
-            <Link href="/signup" className="px-8 py-4 bg-white text-gray-900 border border-gray-200 text-lg font-bold rounded-lg hover:bg-gray-50 shadow-md transition transform hover:-translate-y-1">
+            <Link href="/signup?role=customer" className="px-8 py-4 bg-white text-gray-900 border border-gray-200 text-lg font-bold rounded-lg hover:bg-gray-50 shadow-md transition transform hover:-translate-y-1">
               Join as Customer
             </Link>
           </div>
@@ -124,9 +124,9 @@ export default function Home() {
           <h2 className="text-2xl font-bold text-white mb-4">Live<span className="text-red-500">Q</span></h2>
           <p className="mb-8">Simplify your scheduling. Empower your business.</p>
           <div className="flex justify-center gap-6 text-sm">
-            <a href="#" className="hover:text-white">Privacy Policy</a>
-            <a href="#" className="hover:text-white">Terms of Service</a>
-            <a href="#" className="hover:text-white">Contact Support</a>
+            <span title="Legal page not configured">Privacy Policy</span>
+            <span title="Legal page not configured">Terms of Service</span>
+            <a href="mailto:support@liveq.com" className="hover:text-white">Contact Support</a>
           </div>
           <div className="mt-8 pt-8 border-t border-gray-800 text-xs">
             &copy; {new Date().getFullYear()} LiveQ Inc. All rights reserved.

@@ -6,6 +6,13 @@ function validTime(value: unknown): value is string {
     return hours < 24 && minutes < 60;
 }
 
+function numberValue(value: unknown): number | null {
+    if (typeof value === "number") return Number.isFinite(value) ? value : null;
+    if (typeof value !== "string" || value.trim() === "") return null;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+}
+
 export function validateService(input: unknown, partial = false) {
     if (!input || typeof input !== "object") return { error: "Invalid service payload" };
     const body = input as Record<string, unknown>;
@@ -18,13 +25,15 @@ export function validateService(input: unknown, partial = false) {
         value.name = body.name.trim();
     }
     if (!partial || body.price !== undefined) {
-        const price = typeof body.price === "number" ? body.price : Number(body.price);
-        if (!Number.isFinite(price) || price < 0 || price > 1_000_000) return { error: "Invalid service price" };
+        const price = numberValue(body.price);
+        if (price === null || price < 0 || price > 1_000_000) return { error: "Invalid service price" };
         value.price = price;
     }
     if (!partial || body.duration !== undefined) {
-        const duration = typeof body.duration === "number" ? body.duration : Number(body.duration);
-        if (!Number.isInteger(duration) || duration < 1 || duration > 1440) return { error: "Invalid service duration" };
+        const duration = numberValue(body.duration);
+        if (duration === null || !Number.isInteger(duration) || duration < 1 || duration > 1440) {
+            return { error: "Invalid service duration" };
+        }
         value.duration = duration;
     }
     if (body.description !== undefined) {

@@ -5,7 +5,8 @@ import Business from "@/models/Business";
 import Appointment from "@/models/Appointment";
 import Queue from "@/models/Queue";
 import NotificationModel from "@/models/Notification";
-import { getUser } from "@/lib/auth";
+import mongoose from "mongoose";
+import { getUser, isSameOrigin } from "@/lib/auth";
 
 export async function POST(req: Request) {
     try {
@@ -15,11 +16,20 @@ export async function POST(req: Request) {
         if (!user || user.role !== "customer") {
             return NextResponse.json({ message: "Unauthorized only customers can leave reviews" }, { status: 401 });
         }
+        if (!isSameOrigin(req)) return NextResponse.json({ message: "Invalid origin" }, { status: 403 });
 
         const body = await req.json();
         const { businessId, rating, comment } = body;
 
-        if (!businessId || typeof rating !== "number" || rating < 1 || rating > 5) {
+        if (
+            typeof businessId !== "string" ||
+            !mongoose.isValidObjectId(businessId) ||
+            typeof rating !== "number" ||
+            !Number.isFinite(rating) ||
+            rating < 1 ||
+            rating > 5 ||
+            (comment !== undefined && (typeof comment !== "string" || comment.length > 1000))
+        ) {
             return NextResponse.json({ message: "Invalid payload: rating 1-5 and businessId required" }, { status: 400 });
         }
 
@@ -41,14 +51,14 @@ export async function POST(req: Request) {
         let review = await Review.findOne({ business: businessId, user: user.id });
         if (review) {
             review.rating = rating;
-            review.comment = comment;
+            review.comment = typeof comment === "string" ? comment.trim() : undefined;
             await review.save();
         } else {
             review = await Review.create({
                 business: businessId,
                 user: user.id,
                 rating,
-                comment
+                comment: typeof comment === "string" ? comment.trim() : undefined
             });
         }
 
@@ -76,7 +86,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ message: "Review saved successfully", review, newAverage: Number(averageRating) }, { status: 201 });
     } catch (error: any) {
         console.error("POST /api/reviews Error:", error);
-        return NextResponse.json({ message: error.message }, { status: 500 });
+        return NextResponse.json({ message: "Internal server error" }, { status: 500 });
     }
 }
 
@@ -105,6 +115,6 @@ export async function GET(req: Request) {
         return NextResponse.json(reviews);
     } catch (error: any) {
         console.error("GET /api/reviews Error:", error);
-        return NextResponse.json({ message: error.message }, { status: 500 });
+        return NextResponse.json({ message: "Internal server error" }, { status: 500 });
     }
 }

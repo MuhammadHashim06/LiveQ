@@ -118,7 +118,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
         return NextResponse.json(updatedQueue);
     } catch (error: any) {
-        return NextResponse.json({ message: error.message }, { status: 500 });
+        return NextResponse.json({ message: "Internal server error" }, { status: 500 });
     }
 }
 
@@ -142,6 +142,6 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
         emitBusinessEvent(String(business._id), "queue:changed", { businessId: String(business._id), queueId: id }, user.id);
         return NextResponse.json({ message: "Deleted" });
     } catch (error: any) {
-        return NextResponse.json({ message: error.message }, { status: 500 });
+        return NextResponse.json({ message: "Internal server error" }, { status: 500 });
     }
 }

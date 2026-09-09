@@ -23,7 +23,7 @@ export async function GET(req: Request) {
 
         return NextResponse.json(queue);
     } catch (error: any) {
-        return NextResponse.json({ message: error.message }, { status: 500 });
+        return NextResponse.json({ message: "Internal server error" }, { status: 500 });
     }
 }
 
@@ -65,6 +65,6 @@ export async function POST(req: Request) {
 
         return NextResponse.json(newQueueItem, { status: 201 });
     } catch (error: any) {
-        return NextResponse.json({ message: error.message }, { status: 500 });
+        return NextResponse.json({ message: "Internal server error" }, { status: 500 });
     }
 }

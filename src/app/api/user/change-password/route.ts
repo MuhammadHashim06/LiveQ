@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import User from "@/models/User";
-import { getUser } from "@/lib/auth";
+import { getUser, isSameOrigin } from "@/lib/auth";
 import bcrypt from "bcryptjs";
 
 export async function POST(req: Request) {
     try {
         await dbConnect();
+
+        if (!isSameOrigin(req)) return NextResponse.json({ message: "Invalid origin" }, { status: 403 });
 
         const authUser = await getUser();
         if (!authUser) {
@@ -43,6 +45,6 @@ export async function POST(req: Request) {
         return NextResponse.json({ message: "Password updated successfully" });
     } catch (error: any) {
         console.error("POST /api/user/change-password Error:", error);
-        return NextResponse.json({ message: error.message || "Something went wrong" }, { status: 500 });
+        return NextResponse.json({ message: "Internal server error" }, { status: 500 });
     }
 }

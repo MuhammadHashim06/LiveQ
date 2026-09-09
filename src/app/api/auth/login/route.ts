@@ -100,6 +100,6 @@ export async function POST(req: Request) {
 
         return response;
     } catch (error: any) {
-        return NextResponse.json({ message: error.message || "Something went wrong" }, { status: 500 });
+        return NextResponse.json({ message: "Internal server error" }, { status: 500 });
     }
 }
