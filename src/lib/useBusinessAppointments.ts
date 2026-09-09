@@ -37,12 +37,14 @@ export function useBusinessAppointments() {
     useRealtime("appointment:changed", () => void refresh());
 
     const updateStatus = useCallback(async (appointmentId: string, status: string) => {
-        await apiRequest("/api/business/appointments", {
+        const updated = await apiRequest<BusinessAppointment>("/api/business/appointments", {
             method: "PATCH",
             body: JSON.stringify({ appointmentId, status }),
         });
-        await refresh();
-    }, [refresh]);
+        setAppointments((current) => current.map((appointment) =>
+            appointment._id === appointmentId ? { ...appointment, ...updated } : appointment
+        ));
+    }, []);
 
     return { appointments, loading, error, refresh, updateStatus };
 }

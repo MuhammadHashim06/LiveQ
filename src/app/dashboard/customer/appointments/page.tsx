@@ -1,45 +1,18 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { Clock, CheckCircle2, XCircle, Building2, MapPin, Users, Star } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { useRealtime } from '@/lib/useRealtime'
+import { apiRequest, getApiErrorMessage } from '@/lib/apiClient'
+import { useCustomerAppointments } from '@/lib/useCustomerAppointments'
 import Link from 'next/link'
 
-type QueueItem = {
-  _id: string
-  status: "waiting" | "serving" | "completed" | "removed" | "cancelled"
-  joinedAt: string
-  name: string
-  business: {
-    _id: string
-    name: string
-    category: string
-    address?: string
-  }
-  position?: number
-  peopleAhead?: number
-}
-
-type AppointmentItem = {
-  _id: string
-  business: {
-    _id: string
-    name: string
-    category: string
-    address?: string
-  }
-  serviceName: string
-  scheduledTime: string
-  status: "pending" | "confirmed" | "completed" | "cancelled"
-  earlyArrivalRequested?: boolean
-}
-
 export default function AppointmentsPage() {
-  const [queues, setQueues] = useState<QueueItem[]>([])
-  const [appointments, setAppointments] = useState<AppointmentItem[]>([])
-  const [loadingQueues, setLoadingQueues] = useState(true)
-  const [loadingAppts, setLoadingAppts] = useState(true)
+  const { queues, appointments, loadingQueues, loadingAppts, refreshQueues, refreshAppointments } = useCustomerAppointments({
+    onTurn: (queue) => toast.success(`It's your turn at ${queue.business?.name}!`, { duration: 5000 }),
+    onQueueError: (message) => toast.error(message),
+    onAppointmentError: (message) => toast.error(message),
+  })
 
   const [reviewModalOpen, setReviewModalOpen] = useState(false)
   const [selectedBusiness, setSelectedBusiness] = useState<{ id: string, name: string } | null>(null)
@@ -49,76 +22,17 @@ export default function AppointmentsPage() {
 
   const [reviewedBusinessIds, setReviewedBusinessIds] = useState<Set<string>>(new Set())
 
-  const prevQueuesRef = useRef<QueueItem[]>([])
-  const isFirstLoad = useRef(true)
-
-  const fetchQueues = async () => {
-    try {
-      const res = await fetch('/api/queue/customer')
-      if (res.ok) {
-        const data = await res.json()
-
-        if (!isFirstLoad.current) {
-          const oldList = prevQueuesRef.current;
-
-          // Check if any status changed from 'waiting' to 'serving'
-          const newlyServing = data.filter((item: QueueItem) =>
-            item.status === 'serving' &&
-            oldList.find(old => old._id === item._id && old.status === 'waiting')
-          );
-
-          if (newlyServing.length > 0) {
-            newlyServing.forEach((item: QueueItem) => {
-              toast.success(`It's your turn at ${item.business?.name}!`, { icon: '🎉', duration: 5000 })
-            })
-          }
-        }
-
-        prevQueuesRef.current = data;
-        isFirstLoad.current = false;
-        setQueues(data)
-      } else {
-        toast.error('Failed to load your queues')
-      }
-    } catch (err) {
-      console.error(err)
-      toast.error('An error occurred while fetching your data')
-    } finally {
-      setLoadingQueues(false)
-    }
-  }
-
-  const fetchAppointments = async () => {
-    try {
-      const res = await fetch('/api/appointments/customer')
-      if (res.ok) {
-        const data = await res.json()
-        setAppointments(data)
-      }
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setLoadingAppts(false)
-    }
-  }
 
   const handleEarlyArrival = async (appointmentId: string) => {
     try {
-      const res = await fetch('/api/appointments/customer/early-arrival', {
+      await apiRequest('/api/appointments/customer/early-arrival', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ appointmentId })
       })
-
-      if (res.ok) {
-        toast.success("Request sent to business owner!")
-        fetchAppointments()
-      } else {
-        const data = await res.json()
-        toast.error(data.message || "Failed to send request")
-      }
-    } catch (err) {
-      toast.error("Network error")
+      toast.success("Request sent to business owner!")
+      void refreshAppointments()
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to send request"))
     }
   }
 
@@ -139,75 +53,48 @@ export default function AppointmentsPage() {
 
     setSubmittingReview(true);
     try {
-      const res = await fetch("/api/reviews", {
+      await apiRequest("/api/reviews", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           businessId: selectedBusiness.id,
           rating,
           comment
         })
       });
-      if (res.ok) {
-        toast.success(reviewedBusinessIds.has(selectedBusiness.id) ? "Review updated!" : "Review submitted successfully!");
-        setReviewedBusinessIds(prev => new Set(prev).add(selectedBusiness.id))
-        setReviewModalOpen(false);
-      } else {
-        const data = await res.json();
-        toast.error(data.message || "Failed to submit review");
-      }
-    } catch {
-      toast.error("Network error");
+      toast.success(reviewedBusinessIds.has(selectedBusiness.id) ? "Review updated!" : "Review submitted successfully!");
+      setReviewedBusinessIds(prev => new Set(prev).add(selectedBusiness.id))
+      setReviewModalOpen(false);
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to submit review"));
     } finally {
       setSubmittingReview(false);
     }
   }
 
-  useRealtime('queue:changed', () => { void fetchQueues() })
-  useRealtime('appointment:changed', () => { void fetchAppointments() })
-
   useEffect(() => {
-    fetchQueues()
-    fetchAppointments()
-
     // Fetch already reviewed businesses to pre-populate the reviewed set
-    fetch('/api/reviews?userId=me').then(async (res) => {
-      if (res.ok) {
-        const data = await res.json()
-        if (Array.isArray(data) && data.length > 0) {
-          setReviewedBusinessIds(new Set(data.map((r: any) => r.business?._id?.toString() || r.business?.toString())))
-        }
+    void apiRequest<unknown[]>('/api/reviews?userId=me').then((data) => {
+      if (data.length > 0) {
+        setReviewedBusinessIds(new Set(data.map((review) => {
+          const business = (review as { business?: { _id?: string } | string }).business
+          return typeof business === 'string' ? business : business?._id
+        }).filter((id): id is string => Boolean(id))))
       }
     }).catch(() => { })
-
-    const interval = setInterval(() => {
-      void fetchQueues()
-      void fetchAppointments()
-    }, 30000)
-
-    return () => clearInterval(interval)
   }, [])
 
   const handleCancelQueue = async (queueId: string) => {
     if (!confirm("Are you sure you want to leave this queue?")) return;
 
-    // In a real app we'd have a PUT endpoint to update status. 
-    // We can just hit a generic update or create one specifically if missing.
     try {
-      const res = await fetch(`/api/queue/${queueId}`, {
+      await apiRequest('/api/queue/' + queueId, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'cancelled' })
       });
-
-      if (res.ok) {
-        toast.success("Successfully left the queue.");
-        fetchQueues(); // Refresh the list
-      } else {
-        toast.error("Failed to cancel queue ticket.");
-      }
-    } catch {
-      toast.error("An error occurred");
+      toast.success("Successfully left the queue.");
+      void refreshQueues();
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to cancel queue ticket."));
     }
   }
 
