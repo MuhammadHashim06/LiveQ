@@ -19,10 +19,11 @@ Use an existing nearby feature as the copy-and-adapt reference.
    test that needs MongoDB must document its test database setup rather than
    silently using production data.
 5. **Frontend:** add the page under the correct `src/app/dashboard/<role>`
-   route, reuse `src/components` and existing fetch/API helpers, handle loading,
-   empty, unauthorized, and error states, and subscribe to Socket.IO events if
-   the data changes live.
+   route, reuse `src/components`, call APIs through `src/lib/apiClient.ts`,
+   place repeated data loading in a `use*` hook, handle loading, empty,
+   unauthorized, and error states, and subscribe through `useRealtime` if the
+   data changes live. After a mutation update the affected state or refresh
+   only that dataset.
 6. **Verify:** run `npm test`, `npm run lint`, `npm run typecheck`, then
    `npm run build`. Review the diff for secrets and confirm role/ownership
    behavior before committing.
-

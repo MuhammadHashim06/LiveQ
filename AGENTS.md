@@ -31,10 +31,39 @@ handlers and persistence models live in `src/models`.
 
 ## Add a feature
 
-Trace the existing route and dashboard pattern, update the Mongoose model,
-implement the protected route, add the smallest useful test, then integrate the
-matching page/component. Follow the concrete checklist in
-[the feature recipe](docs/recipes/add-new-entity.md).
+Follow the repeatable [agent workflow](docs/agent-workflow.md): inspect first,
+write a small plan, reuse existing helpers, implement the backend boundary and
+frontend state together, add a focused test, run every repository check, and
+commit one coherent stage. For a new persisted resource, use the concrete
+[feature recipe](docs/recipes/add-new-entity.md).
+
+## Shared code to reuse
+
+- `src/lib/apiClient.ts` for browser API requests and consistent API errors.
+- `src/lib/useRealtime.ts` plus the existing `use*` data hooks for live data;
+  do not add a second polling or Socket.IO listener for the same resource.
+- `src/lib/auth.ts`, `src/lib/authHelpers.ts`, and `src/lib/businessQuery.ts`
+  for authentication, email/code handling, and business ownership queries.
+- `src/lib/realtime.ts`, `Notification`, `email.ts`, and `cloudinary.ts` for
+  existing server side effects when the surrounding feature uses them.
+
+## Agent decision rules
+
+1. Inspect the worktree and trace all callers before editing a shared helper.
+2. Prefer the smallest change that satisfies the request; delete duplication
+   before adding an abstraction.
+3. Treat authentication, role checks, ownership filters, same-origin checks,
+   input validation, status transitions, and data exposure as security or
+   correctness boundaries. Never remove them for convenience.
+4. Keep frontend state authoritative: after a mutation update the affected
+   state or refresh only the affected dataset; do not refetch unrelated data.
+5. Add or update a focused test when logic changes. Do not create speculative
+   templates, dependencies, or infrastructure.
+6. If requirements conflict with the code or docs, report the mismatch and
+   follow the code only after confirming the intended behavior.
+
+For the complete procedure, validation commands, and handoff format, read
+[docs/agent-workflow.md](docs/agent-workflow.md).
 
 ## Never do this
 
@@ -49,7 +78,8 @@ matching page/component. Follow the concrete checklist in
 
 Start with this file, then read [architecture](docs/architecture.md),
 [access control](docs/access-control.md), and the
-[feature recipe](docs/recipes/add-new-entity.md). Inspect the nearest existing
-route/model/page, check the current worktree before editing, make the smallest
-change, and run lint, typecheck, and tests before handoff.
-
+[feature recipe](docs/recipes/add-new-entity.md). Next read the
+[agent workflow](docs/agent-workflow.md), inspect the nearest existing
+route/model/page, check the current worktree before editing, and define the
+requested stage's non-goals. Finish with the full validation sequence and a
+separate descriptive commit.
