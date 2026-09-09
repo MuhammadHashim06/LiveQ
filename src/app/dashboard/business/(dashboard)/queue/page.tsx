@@ -1,110 +1,33 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { Plus, Trash2, RotateCcw, Check, X, Clock, Play, GripVertical, RefreshCw, UserX } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd'
-import { useRealtime } from '@/lib/useRealtime'
-
-interface QueueItem {
-  _id: string
-  name: string
-  status: string
-  joinedAt: string
-}
-
-interface AppointmentItem {
-  _id: string
-  user: {
-    _id: string
-    name: string
-  }
-  serviceName: string
-  scheduledTime: string
-  status: string
-  earlyArrivalRequested?: boolean
-  checkedInAt?: string
-}
+import { apiRequest, getApiErrorMessage } from '@/lib/apiClient'
+import { useBusinessQueue } from '@/lib/useBusinessQueue'
 
 export default function QueuePage() {
-  const [queue, setQueue] = useState<QueueItem[]>([])
-  const [appointments, setAppointments] = useState<AppointmentItem[]>([])
-  const [loading, setLoading] = useState(true)
+  const {
+    queue,
+    setQueue,
+    appointments,
+    loading,
+    lastFetched,
+    refreshQueue,
+    refreshAppointments,
+  } = useBusinessQueue({
+    onNewCustomer: (item) => toast('New customer joined the queue: ' + item.name),
+  })
   const [newName, setNewName] = useState('')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
-  const [lastRemoved, setLastRemoved] = useState<QueueItem | null>(null) // For local undo (simple version)
-  const [lastFetched, setLastFetched] = useState<Date | null>(null)
+  const [lastRemoved, setLastRemoved] = useState<typeof queue[number] | null>(null) // For local undo (simple version)
   const [isRefreshing, setIsRefreshing] = useState(false)
-
-  const prevQueueRef = useRef<QueueItem[]>([])
-  const isFirstLoad = useRef(true)
-  // Real undo would fetch 'removed' items from DB
-
-  const requestVersion = useRef(0)
-
-  const fetchQueueAndAppointments = async (showLoading = true) => {
-    const requestId = ++requestVersion.current
-    if (showLoading) setLoading(true)
-    try {
-      // Fetch Live Queue
-      const queueRes = await fetch('/api/queue')
-      if (queueRes.ok) {
-        const queueData = await queueRes.json()
-
-        // Polling Notification Logic
-        if (!isFirstLoad.current) {
-          const newItems = queueData.filter((item: QueueItem) => !prevQueueRef.current.find(oldItem => oldItem._id === item._id))
-          if (newItems.length > 0) {
-            newItems.forEach((newItem: QueueItem) => {
-              toast(`New customer joined the queue: ${newItem.name}`, { icon: '👋' })
-            })
-          }
-        }
-
-        if (requestId !== requestVersion.current) return
-        prevQueueRef.current = queueData
-        setQueue(queueData)
-      }
-
-      // Fetch Appointments
-      const apptRes = await fetch('/api/business/appointments')
-      if (apptRes.ok) {
-        const apptData = await apptRes.json()
-        if (requestId !== requestVersion.current) return
-        setAppointments(apptData)
-      }
-
-      isFirstLoad.current = false
-      setLastFetched(new Date())
-    } catch (e) {
-      console.error(e)
-    } finally {
-      if (requestId === requestVersion.current) {
-        setLoading(false)
-        setIsRefreshing(false)
-      }
-    }
-  }
-
-  useRealtime('queue:changed', () => { void fetchQueueAndAppointments(false) })
-  useRealtime('appointment:changed', () => { void fetchQueueAndAppointments(false) })
 
   const handleManualRefresh = () => {
     setIsRefreshing(true)
-    fetchQueueAndAppointments()
+    void Promise.all([refreshQueue(), refreshAppointments()]).finally(() => setIsRefreshing(false))
   }
-
-  useEffect(() => {
-    fetchQueueAndAppointments()
-    // Slow fallback for reconnects; normal updates arrive over Socket.IO.
-    const interval = setInterval(() => {
-      // Checking document.body to see if dragging is active (dnd adds a class usually)
-      if (!document.body.classList.contains('dragging')) {
-        void fetchQueueAndAppointments(false)
-      }
-    }, 30000)
-    return () => clearInterval(interval)
-  }, [])
 
   const addToQueue = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -116,42 +39,32 @@ export default function QueuePage() {
     // Optional loading toast
     const toastId = toast.loading("Adding customer...");
     try {
-      const res = await fetch('/api/queue', {
+      await apiRequest('/api/queue', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newName }),
       })
-      if (res.ok) {
-        toast.success("Customer added to queue!", { id: toastId })
-        setNewName('')
-        fetchQueueAndAppointments()
-      } else {
-        const data = await res.json()
-        toast.error(data.message || "Failed to add customer", { id: toastId })
-      }
-    } catch (e) {
-      console.error(e)
-      toast.error("Something went wrong", { id: toastId })
+      toast.success("Customer added to queue!", { id: toastId })
+      setNewName('')
+      void refreshQueue()
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to add customer"), { id: toastId })
     }
   }
 
   const updateStatus = async (id: string, status: string) => {
     try {
-      const res = await fetch(`/api/queue/${id}`, {
+      await apiRequest('/api/queue/' + id, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
       })
-      if (res.ok) {
-        if (status === 'removed') {
+      if (status === 'removed') {
           // Keep track for local "Undo" toast
           const item = queue.find(q => q._id === id)
           if (item) setLastRemoved({ ...item, status: 'removed' })
-        }
-        fetchQueueAndAppointments()
       }
-    } catch (e) {
-      console.error(e)
+      void refreshQueue()
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to update queue status"))
     }
   }
 
@@ -180,20 +93,15 @@ export default function QueuePage() {
     }));
 
     try {
-      const res = await fetch('/api/queue/reorder', {
+      await apiRequest('/api/queue/reorder', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates),
       });
-
-      if (!res.ok) {
-        throw new Error("Failed to reorder");
-      }
       toast.success("Order preserved");
-    } catch (e) {
-      console.error(e);
-      toast.error("Failed to reorder, reverting...");
-      fetchQueueAndAppointments(); // Revert to database state
+    } catch (error) {
+      console.error(error);
+      toast.error(getApiErrorMessage(error, "Failed to reorder, reverting..."));
+      void refreshQueue(); // Revert to database state
     }
   };
 
@@ -220,26 +128,19 @@ export default function QueuePage() {
   const handleCheckInAppointment = async (appointmentId: string, priority: boolean = false) => {
     const toastId = toast.loading("Checking in...");
     try {
-      const res = await fetch('/api/business/appointments/checkin', {
+      await apiRequest('/api/business/appointments/checkin', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ appointmentId, priority })
       });
-
-      if (res.ok) {
-        toast.success("Moved to Live Queue!", { id: toastId });
-        fetchQueueAndAppointments();
-      } else {
-        const data = await res.json();
-        toast.error(data.message || "Failed to check in", { id: toastId });
-      }
-    } catch (err) {
-      toast.error("Network error", { id: toastId });
+      toast.success("Moved to Live Queue!", { id: toastId });
+      void Promise.all([refreshQueue(), refreshAppointments()]);
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to check in"), { id: toastId });
     }
   }
 
   // Filter today's confirmed appointments
-  const todaysAppointments = appointments.filter((a: AppointmentItem) => {
+  const todaysAppointments = appointments.filter((a) => {
     if (a.status !== 'confirmed' || a.checkedInAt) return false;
     const apptDate = new Date(a.scheduledTime).toDateString();
     const today = new Date().toDateString();
@@ -304,7 +205,7 @@ export default function QueuePage() {
             Waiting List / Appointments ({todaysAppointments.length})
           </h2>
           <div className="space-y-3">
-            {todaysAppointments.map((appt: AppointmentItem) => (
+            {todaysAppointments.map((appt) => (
               <div key={appt._id} className={`flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 rounded-xl border ${appt.earlyArrivalRequested ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-100'} gap-4`}>
                 <div>
                   <div className="flex items-center gap-2 mb-1">
@@ -317,7 +218,7 @@ export default function QueuePage() {
 
                   {appt.earlyArrivalRequested && (
                     <div className="mt-2 text-xs font-bold text-yellow-700 uppercase tracking-wider bg-yellow-100/50 inline-block px-2 py-1 rounded inline-flex items-center gap-1.5 border border-yellow-200">
-                      ★ Arrived Early & Waiting
+                      â˜… Arrived Early & Waiting
                     </div>
                   )}
                 </div>
