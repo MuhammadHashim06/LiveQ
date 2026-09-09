@@ -27,3 +27,8 @@ Use an existing nearby feature as the copy-and-adapt reference.
 6. **Verify:** run `npm test`, `npm run lint`, `npm run typecheck`, then
    `npm run build`. Review the diff for secrets and confirm role/ownership
    behavior before committing.
+
+For local manual accounts, copy the `SEED_*` placeholders from `.env.example`
+into `.env.local` or the shell environment, then use
+`npm run seed -- --confirm-seed`. Never use production credentials or run the
+seed against a non-local database without explicitly opting in.

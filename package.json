@@ -6,6 +6,7 @@
     "dev": "node server.js",
     "build": "next build",
     "start": "node server.js",
+    "seed": "node --env-file-if-exists=.env.local --experimental-strip-types scripts/seed.ts",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --test \"tests/*.test.ts\""

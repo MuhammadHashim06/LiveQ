@@ -14,6 +14,11 @@ handlers and persistence models live in `src/models`.
   origin; it is used for application links such as password reset links.
 - Checks: `npm run lint`, `npm run typecheck`, and `npm test`.
 - Production: `npm run build`, then `npm run start`.
+- Development seed: copy the `SEED_*` placeholders from `.env.example` into
+  `.env.local` or the shell environment, then run `npm run seed --
+  --confirm-seed`. It creates/upserts one admin, customer,
+  business owner, and verified demo business; it refuses production and
+  non-local MongoDB unless explicitly overridden.
 - Runtime configuration is described by `.env.example`; use local/deployment
   secret storage, never source-control real values.
 
