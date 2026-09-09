@@ -2,19 +2,19 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Appointment from "@/models/Appointment";
 import Queue from "@/models/Queue";
-import Business from "@/models/Business";
 import Notification from "@/models/Notification";
 import User from "@/models/User";
-import { getUser, isSameOrigin } from "@/lib/auth";
+import { isSameOrigin, requireUser } from "@/lib/auth";
 import { sendEmail, queueJoinedTemplate } from "@/lib/email";
 import { emitBusinessEvent, emitUserEvent } from "@/lib/realtime";
+import { getBusinessForOwner } from "@/lib/businessQuery";
 
 export async function POST(req: Request) {
     try {
         await dbConnect();
 
-        const user = await getUser();
-        if (!user || user.role !== "business") {
+        const user = await requireUser("business");
+        if (!user) {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
         }
         if (!isSameOrigin(req)) return NextResponse.json({ message: "Invalid origin" }, { status: 403 });
@@ -27,7 +27,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: "Appointment ID is required" }, { status: 400 });
         }
 
-        const business = await Business.findOne({ owner: user.id });
+        const business = await getBusinessForOwner(user.id);
         if (!business) {
             return NextResponse.json({ message: "Business not found" }, { status: 404 });
         }

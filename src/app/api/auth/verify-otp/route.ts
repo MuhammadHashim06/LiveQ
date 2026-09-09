@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import User from "@/models/User";
-import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "@/lib/auth";
 import { getClientIp, rateLimit } from "@/lib/rateLimit";
+import { hashVerificationCode, normalizeEmail } from "@/lib/authHelpers";
 
 export async function POST(req: Request) {
     try {
@@ -15,7 +15,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: "Email and OTP are required" }, { status: 400 });
         }
 
-        const normalizedEmail = email.trim().toLowerCase();
+        const normalizedEmail = normalizeEmail(email) ?? "";
         const limit = rateLimit("verify:" + getClientIp(req) + ":" + normalizedEmail, 10, 15 * 60 * 1000);
         if (!limit.allowed) {
             return NextResponse.json(
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
         }
 
         // 1. Get hashed OTP from the plaintext OTP
-        const hashedVerificationToken = crypto.createHash('sha256').update(otp).digest('hex');
+        const hashedVerificationToken = hashVerificationCode(otp);
 
         // 2. Find user with that token (and email) and ensure it hasn't expired
         const user = await User.findOne({

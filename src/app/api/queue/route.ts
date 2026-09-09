@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Queue from "@/models/Queue";
-import Business from "@/models/Business";
 import Notification from "@/models/Notification";
 import { isSameOrigin, requireUser } from "@/lib/auth";
 import { emitBusinessEvent, emitUserEvent } from "@/lib/realtime";
+import { getBusinessForOwner } from "@/lib/businessQuery";
 
 // GET: Fetch queue for current business
 export async function GET(req: Request) {
@@ -13,7 +13,7 @@ export async function GET(req: Request) {
         const user = await requireUser("business");
         if (!user) return NextResponse.json({ message: "Business access only" }, { status: 403 });
 
-        const business = await Business.findOne({ owner: user.id });
+        const business = await getBusinessForOwner(user.id);
         if (!business) return NextResponse.json({ message: "Business not found" }, { status: 404 });
 
         const queue = await Queue.find({
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
         const user = await requireUser("business");
         if (!user) return NextResponse.json({ message: "Business access only" }, { status: 403 });
 
-        const business = await Business.findOne({ owner: user.id });
+        const business = await getBusinessForOwner(user.id);
         if (!business) return NextResponse.json({ message: "Business not found" }, { status: 404 });
 
         const body = await req.json();

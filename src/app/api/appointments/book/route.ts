@@ -4,7 +4,7 @@ import dbConnect from "@/lib/dbConnect";
 import Appointment from "@/models/Appointment";
 import Business from "@/models/Business";
 import Notification from "@/models/Notification";
-import { getUser, isSameOrigin } from "@/lib/auth";
+import { isSameOrigin, requireUser } from "@/lib/auth";
 import { sendEmail, appointmentConfirmationTemplate } from "@/lib/email";
 import { emitUserEvent } from "@/lib/realtime";
 
@@ -12,8 +12,8 @@ export async function POST(req: Request) {
     try {
         await dbConnect();
 
-        const user = await getUser();
-        if (!user || user.role !== "customer") {
+        const user = await requireUser("customer");
+        if (!user) {
             return NextResponse.json({ message: "Unauthorized. Please log in to book an appointment." }, { status: 401 });
         }
         if (!isSameOrigin(req)) return NextResponse.json({ message: "Invalid origin" }, { status: 403 });

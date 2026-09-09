@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Queue from "@/models/Queue";
-import Business from "@/models/Business";
 import { isSameOrigin, requireUser } from "@/lib/auth";
 import { emitBusinessEvent } from "@/lib/realtime";
+import { getBusinessForOwner } from "@/lib/businessQuery";
 
 // PUT: Bulk update sortOrder for queue items (Drag and Drop)
 export async function PUT(req: Request) {
@@ -15,7 +15,7 @@ export async function PUT(req: Request) {
         const user = await requireUser("business");
         if (!user) return NextResponse.json({ message: "Business access only" }, { status: 403 });
 
-        const business = await Business.findOne({ owner: user.id });
+        const business = await getBusinessForOwner(user.id);
         if (!business) return NextResponse.json({ message: "Business not found" }, { status: 404 });
 
         // 2. Parse body: expecting [{ _id: string, sortOrder: number }]

@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import User from "@/models/User";
-import crypto from "crypto";
 import { sendEmail, verifyEmailTemplate } from "@/lib/email";
 import { getUser } from "@/lib/auth";
 import { getClientIp, rateLimit } from "@/lib/rateLimit";
+import { createVerificationCode, normalizeEmail } from "@/lib/authHelpers";
 
 export async function POST(req: Request) {
     try {
@@ -12,7 +12,7 @@ export async function POST(req: Request) {
 
         // 1. Get user (either from cookie or from request body)
         const { email } = await req.json().catch(() => ({}));
-        const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
+        const normalizedEmail = normalizeEmail(email) ?? "";
         const limit = rateLimit("resend:" + getClientIp(req) + ":" + normalizedEmail, 5, 15 * 60 * 1000);
         if (!limit.allowed) {
             return NextResponse.json(
@@ -42,13 +42,9 @@ export async function POST(req: Request) {
         }
 
         // 3. Generate a new 6-digit OTP
-        const otpCode = crypto.randomInt(100000, 1000000).toString();
-        const hashedVerificationToken = crypto.createHash('sha256').update(otpCode).digest('hex');
+        const { code: otpCode, token: hashedVerificationToken, expiresAt: verifyEmailExpire } = createVerificationCode();
 
         // 4. Set new expiration to 15 minutes from now
-        const verifyEmailExpire = new Date();
-        verifyEmailExpire.setMinutes(verifyEmailExpire.getMinutes() + 15);
-
         // 5. Update user and save
         user.verifyEmailToken = hashedVerificationToken;
         user.verifyEmailExpire = verifyEmailExpire;

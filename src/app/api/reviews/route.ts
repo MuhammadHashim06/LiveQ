@@ -6,14 +6,14 @@ import Appointment from "@/models/Appointment";
 import Queue from "@/models/Queue";
 import NotificationModel from "@/models/Notification";
 import mongoose from "mongoose";
-import { getUser, isSameOrigin } from "@/lib/auth";
+import { getUser, isSameOrigin, requireUser } from "@/lib/auth";
 
 export async function POST(req: Request) {
     try {
         await dbConnect();
 
-        const user = await getUser();
-        if (!user || user.role !== "customer") {
+        const user = await requireUser("customer");
+        if (!user) {
             return NextResponse.json({ message: "Unauthorized only customers can leave reviews" }, { status: 401 });
         }
         if (!isSameOrigin(req)) return NextResponse.json({ message: "Invalid origin" }, { status: 403 });

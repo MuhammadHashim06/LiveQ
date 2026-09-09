@@ -3,10 +3,10 @@ import dbConnect from "@/lib/dbConnect";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import crypto from "crypto";
 import { sendEmail, verifyEmailTemplate } from "@/lib/email";
 import { JWT_SECRET } from "@/lib/auth";
 import { getClientIp, rateLimit } from "@/lib/rateLimit";
+import { createVerificationCode, normalizeEmail } from "@/lib/authHelpers";
 
 export async function POST(req: Request) {
     try {
@@ -16,7 +16,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: "Email and password are required" }, { status: 400 });
         }
 
-        const normalizedEmail = email.trim().toLowerCase();
+        const normalizedEmail = normalizeEmail(email) ?? "";
         const limit = rateLimit("login:" + getClientIp(req) + ":" + normalizedEmail, 10, 15 * 60 * 1000);
         if (!limit.allowed) {
             return NextResponse.json(
@@ -38,15 +38,8 @@ export async function POST(req: Request) {
         // If the user has explicitly `false` for isEmailVerified, block them.
         // We allow undefined/null to pass for backwards compatibility with old accounts.
         if (user.isEmailVerified === false) {
-            // 1. Generate a new 6-digit OTP
-            const otpCode = crypto.randomInt(100000, 1000000).toString();
-            const hashedVerificationToken = crypto.createHash('sha256').update(otpCode).digest('hex');
+            const { code: otpCode, token: hashedVerificationToken, expiresAt: verifyEmailExpire } = createVerificationCode();
 
-            // 2. Set new expiration to 15 minutes from now
-            const verifyEmailExpire = new Date();
-            verifyEmailExpire.setMinutes(verifyEmailExpire.getMinutes() + 15);
-
-            // 3. Update user and save
             user.verifyEmailToken = hashedVerificationToken;
             user.verifyEmailExpire = verifyEmailExpire;
             user.verifyAttempts = 0;

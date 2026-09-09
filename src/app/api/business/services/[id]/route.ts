@@ -1,18 +1,14 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
-import Business from "@/models/Business";
 import { isSameOrigin, requireUser } from "@/lib/auth";
 import { validateService } from "@/lib/businessValidation";
-
-async function getBusinessForOwner() {
-    const user = await requireUser("business");
-    return user ? Business.findOne({ owner: user.id }) : null;
-}
+import { getBusinessForOwner } from "@/lib/businessQuery";
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         await dbConnect();
-        const business = await getBusinessForOwner();
+        const user = await requireUser("business");
+        const business = user ? await getBusinessForOwner(user.id) : null;
         if (!business) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
         const { id: serviceId } = await params;
@@ -39,7 +35,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         await dbConnect();
-        const business = await getBusinessForOwner();
+        const user = await requireUser("business");
+        const business = user ? await getBusinessForOwner(user.id) : null;
         if (!business) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
         if (!isSameOrigin(req)) return NextResponse.json({ message: "Invalid origin" }, { status: 403 });

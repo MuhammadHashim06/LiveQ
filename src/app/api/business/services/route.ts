@@ -3,6 +3,7 @@ import dbConnect from "@/lib/dbConnect";
 import Business from "@/models/Business";
 import { isSameOrigin, requireUser } from "@/lib/auth";
 import { validateService } from "@/lib/businessValidation";
+import { getBusinessForOwner } from "@/lib/businessQuery";
 
 export async function GET(req: Request) {
     try {
@@ -10,7 +11,7 @@ export async function GET(req: Request) {
         const user = await requireUser("business");
         if (!user) return NextResponse.json({ message: "Business access only" }, { status: 403 });
 
-        const business = await Business.findOne({ owner: user.id });
+        const business = await getBusinessForOwner(user.id);
         if (!business) return NextResponse.json({ message: "Business not found" }, { status: 404 });
 
         return NextResponse.json(business.services || []);
@@ -30,7 +31,7 @@ export async function POST(req: Request) {
         const validated = validateService(body);
         if (validated.error) return NextResponse.json({ message: validated.error }, { status: 400 });
 
-        const business = await Business.findOne({ owner: user.id });
+        const business = await getBusinessForOwner(user.id);
         if (!business) return NextResponse.json({ message: "Business not found" }, { status: 404 });
 
         // Push new service to array

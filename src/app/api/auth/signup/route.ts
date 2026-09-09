@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
-import crypto from "crypto";
 import { sendEmail, verifyEmailTemplate } from "@/lib/email";
 import { getClientIp, rateLimit } from "@/lib/rateLimit";
+import { createVerificationCode, normalizeEmail } from "@/lib/authHelpers";
 
 export async function POST(req: Request) {
     try {
@@ -31,8 +31,8 @@ export async function POST(req: Request) {
             );
         }
 
-        const normalizedEmail = email.trim().toLowerCase();
-        if (!normalizedEmail.includes("@") || normalizedEmail.length > 254) {
+        const normalizedEmail = normalizeEmail(email);
+        if (!normalizedEmail || !normalizedEmail.includes("@") || normalizedEmail.length > 254) {
             return NextResponse.json({ message: "Invalid email address" }, { status: 400 });
         }
 
@@ -43,13 +43,7 @@ export async function POST(req: Request) {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Generate 6-digit OTP
-        const otpCode = crypto.randomInt(100000, 1000000).toString();
-        const hashedVerificationToken = crypto.createHash('sha256').update(otpCode).digest('hex');
-
-        // Set expiration to 15 minutes from now
-        const verifyEmailExpire = new Date();
-        verifyEmailExpire.setMinutes(verifyEmailExpire.getMinutes() + 15);
+        const { code: otpCode, token: hashedVerificationToken, expiresAt: verifyEmailExpire } = createVerificationCode();
 
         const newUser = await User.create({
             name: name.trim(),

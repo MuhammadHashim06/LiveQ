@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Queue from "@/models/Queue";
 import Business from "@/models/Business";
-import { getUser, isSameOrigin } from "@/lib/auth";
+import { isSameOrigin, requireUser } from "@/lib/auth";
 import NotificationModel from "@/models/Notification";
 import mongoose from "mongoose";
 import { sendEmail, queueJoinedTemplate } from "@/lib/email";
@@ -56,8 +56,8 @@ export async function POST(req: Request) {
         await dbConnect();
 
         // We require the customer to be logged in to join a queue
-        const user = await getUser();
-        if (!user || user.role !== "customer") {
+        const user = await requireUser("customer");
+        if (!user) {
             return NextResponse.json({ message: "Unauthorized. Please log in to join the queue." }, { status: 401 });
         }
         if (!isSameOrigin(req)) return NextResponse.json({ message: "Invalid origin" }, { status: 403 });

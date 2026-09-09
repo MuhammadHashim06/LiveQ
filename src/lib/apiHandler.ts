@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 
 type ApiHandler = (req: Request, context: unknown) => Promise<NextResponse> | NextResponse;
 
+export function internalServerError(error: unknown, route: string) {
+    console.error(`[API ERROR] ${route}:`, error);
+    return NextResponse.json({ message: "Internal server error" }, { status: 500 });
+}
+
 /**
  * Global API Error Handling Middleware Wrapper
  * Wraps Next.js App Router API endpoints to catch all errors natively,
@@ -12,17 +17,7 @@ export function withErrorHandling(handler: ApiHandler): ApiHandler {
         try {
             return await handler(req, context);
         } catch (error: unknown) {
-            console.error(`[API ERROR] ${req.method} ${req.url}:`, error);
-
-            // Log to external service like Sentry or Datadog here in the future
-
-            return NextResponse.json(
-                {
-                    success: false,
-                    message: "Internal server error"
-                },
-                { status: 500 }
-            );
+            return internalServerError(error, `${req.method} ${req.url}`);
         }
     };
 }
