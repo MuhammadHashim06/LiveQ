@@ -6,23 +6,14 @@ import Appointment from "@/models/Appointment";
 import Queue from "@/models/Queue";
 import os from "os";
 import mongoose from "mongoose";
-import { cookies } from "next/headers";
-import jwt from "jsonwebtoken";
-import { JWT_SECRET } from "@/lib/auth";
+import { requireUser } from "@/lib/auth";
 
 export async function GET(req: Request) {
     try {
         await dbConnect();
 
-        const cookieStore = await cookies();
-        const token = cookieStore.get("token")?.value;
-        if (!token) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-
-        const payload = jwt.verify(token, JWT_SECRET) as any;
-
-        if (payload.role !== "admin") {
-            return NextResponse.json({ message: "Forbidden" }, { status: 403 });
-        }
+        const user = await requireUser("admin");
+        if (!user) return NextResponse.json({ message: "Forbidden" }, { status: 403 });
 
         const now = new Date();
         const startOfDay = new Date(now.setHours(0, 0, 0, 0));

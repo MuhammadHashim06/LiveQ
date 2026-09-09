@@ -5,7 +5,7 @@ import Queue from "@/models/Queue";
 import Business from "@/models/Business";
 import Notification from "@/models/Notification";
 import User from "@/models/User";
-import { getUser } from "@/lib/auth";
+import { getUser, isSameOrigin } from "@/lib/auth";
 import { sendEmail, queueJoinedTemplate } from "@/lib/email";
 import { emitBusinessEvent, emitUserEvent } from "@/lib/realtime";
 
@@ -17,8 +17,11 @@ export async function POST(req: Request) {
         if (!user || user.role !== "business") {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
         }
+        if (!isSameOrigin(req)) return NextResponse.json({ message: "Invalid origin" }, { status: 403 });
 
-        const { appointmentId, priority } = await req.json();
+        const body = await req.json();
+        const appointmentId = body?.appointmentId;
+        const priority = body?.priority;
 
         if (!appointmentId) {
             return NextResponse.json({ message: "Appointment ID is required" }, { status: 400 });
@@ -29,12 +32,13 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: "Business not found" }, { status: 404 });
         }
 
-        const appointment = await Appointment.findOne({
+        const checkinAt = new Date();
+        const appointment = await Appointment.findOneAndUpdate({
             _id: appointmentId,
             business: business._id,
             status: "confirmed",
             checkedInAt: { $exists: false }
-        });
+        }, { $set: { checkedInAt: checkinAt } }, { new: true });
         if (!appointment) {
             return NextResponse.json({ message: "Appointment not found" }, { status: 404 });
         }
@@ -61,8 +65,6 @@ export async function POST(req: Request) {
         });
 
         // Keep the appointment confirmed until the queue item is completed.
-        appointment.checkedInAt = new Date();
-        await appointment.save();
         const realtimePayload = { businessId: String(business._id), appointmentId: String(appointment._id) };
         emitBusinessEvent(String(business._id), "queue:changed", realtimePayload, String(business.owner));
         emitUserEvent(String(appointment.user), "queue:changed", realtimePayload);
@@ -99,6 +101,9 @@ export async function POST(req: Request) {
         return NextResponse.json(newQueueItem, { status: 201 });
     } catch (error: any) {
         console.error("Check-in Error:", error);
+        if (error?.code === 11000) {
+            return NextResponse.json({ message: "This appointment is already checked in" }, { status: 409 });
+        }
         return NextResponse.json({ message: error.message }, { status: 500 });
     }
 }

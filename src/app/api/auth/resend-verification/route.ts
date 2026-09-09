@@ -3,24 +3,28 @@ import dbConnect from "@/lib/dbConnect";
 import User from "@/models/User";
 import crypto from "crypto";
 import { sendEmail, verifyEmailTemplate } from "@/lib/email";
-import jwt from "jsonwebtoken";
-import { cookies } from "next/headers";
-import { JWT_SECRET } from "@/lib/auth";
+import { getUser } from "@/lib/auth";
+import { getClientIp, rateLimit } from "@/lib/rateLimit";
 
 export async function POST(req: Request) {
     try {
         await dbConnect();
 
         // 1. Get user (either from cookie or from request body)
-        const cookieStore = await cookies();
-        const token = cookieStore.get("token")?.value;
         const { email } = await req.json().catch(() => ({}));
         const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
+        const limit = rateLimit("resend:" + getClientIp(req) + ":" + normalizedEmail, 5, 15 * 60 * 1000);
+        if (!limit.allowed) {
+            return NextResponse.json(
+                { message: "Too many requests" },
+                { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
+            );
+        }
 
         let user;
-        if (token) {
-            const decoded = jwt.verify(token, JWT_SECRET) as jwt.JwtPayload;
-            user = await User.findById(decoded.id);
+        const session = await getUser();
+        if (session) {
+            user = await User.findById(session.id);
         } else if (normalizedEmail) {
             user = await User.findOne({ email: normalizedEmail });
         }

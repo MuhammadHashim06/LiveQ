@@ -29,4 +29,12 @@ const AppointmentSchema: Schema = new Schema(
   { timestamps: true }
 )
 
+AppointmentSchema.index(
+  { business: 1, user: 1, scheduledTime: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { status: { $in: ["pending", "confirmed"] } }
+  }
+);
+
 export default mongoose.models.Appointment || mongoose.model<IAppointment>("Appointment", AppointmentSchema)

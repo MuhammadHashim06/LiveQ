@@ -6,7 +6,7 @@ import Appointment from "@/models/Appointment";
 import NotificationModel from "@/models/Notification";
 import User from "@/models/User";
 import { sendEmail, queueUpdateTemplate } from "@/lib/email";
-import { getUser } from "@/lib/auth";
+import { getUser, isSameOrigin } from "@/lib/auth";
 import { emitBusinessEvent, emitUserEvent } from "@/lib/realtime";
 
 // PATCH: Update status (serving, completed, removed)
@@ -14,7 +14,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const { id } = await params;
     try {
         await dbConnect();
-        const { status } = await req.json(); // "serving", "completed", "removed", "waiting" (for undo)
+        if (!isSameOrigin(req)) return NextResponse.json({ message: "Invalid origin" }, { status: 403 });
+        const body = await req.json();
+        const status = body?.status; // "serving", "completed", "removed", "waiting" (for undo)
         const allowedStatuses = ["waiting", "serving", "completed", "removed", "cancelled"];
         if (!allowedStatuses.includes(status)) {
             return NextResponse.json({ message: "Invalid queue status" }, { status: 400 });
@@ -23,8 +25,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         const user = await getUser();
         if (!user) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
-        const updatedQueue = await Queue.findById(id).populate('business', 'name owner');
+        let updatedQueue = await Queue.findById(id).populate('business', 'name owner');
         if (!updatedQueue) return NextResponse.json({ message: "Queue item not found" }, { status: 404 });
+        const transitions: Record<string, string[]> = {
+            waiting: ["serving", "removed", "cancelled"],
+            serving: ["waiting", "completed", "removed", "cancelled"],
+            completed: [],
+            removed: [],
+            cancelled: [],
+        };
+        if (!transitions[updatedQueue.status]?.includes(status)) {
+            return NextResponse.json({ message: "Invalid queue status transition" }, { status: 409 });
+        }
 
         const business = updatedQueue.business as any;
         const isBusinessOwner = user.role === "business" && business?.owner?.toString() === user.id;
@@ -34,9 +46,17 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             return NextResponse.json({ message: "Forbidden" }, { status: 403 });
         }
 
-        const wasCompleted = updatedQueue.status === "completed";
-        updatedQueue.status = status;
-        await updatedQueue.save();
+        const previousStatus = updatedQueue.status;
+        const wasCompleted = previousStatus === "completed";
+        const transitionedQueue = await Queue.findOneAndUpdate(
+            { _id: id, status: previousStatus },
+            { $set: { status } },
+            { new: true, runValidators: true }
+        ).populate("business", "name owner");
+        if (!transitionedQueue) {
+            return NextResponse.json({ message: "Queue item was updated by another request" }, { status: 409 });
+        }
+        updatedQueue = transitionedQueue;
         const realtimePayload = { businessId: String(business._id), queueId: id };
         emitBusinessEvent(String(business._id), "queue:changed", realtimePayload, String(business.owner));
         emitUserEvent(updatedQueue.user?.toString(), "queue:changed", realtimePayload);
@@ -107,6 +127,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     const { id } = await params;
     try {
         await dbConnect();
+        if (!isSameOrigin(req)) return NextResponse.json({ message: "Invalid origin" }, { status: 403 });
         const user = await getUser();
         if (!user) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 

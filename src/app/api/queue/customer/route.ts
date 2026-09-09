@@ -18,39 +18,37 @@ export async function GET(req: Request) {
             .sort({ joinedAt: -1 })
             .lean();
 
-        // For active queues (waiting/serving), calculate their relative position
-        const queuesWithPosition = await Promise.all(
-            userQueues.map(async (q: any) => {
-                let position = null;
-                let peopleAhead = 0;
-
-                if (q.status === "waiting" || q.status === "serving") {
-                    // To get the exact position respecting custom drag-and-drop sorts,
-                    // we fetch the ordered list of active queues for this business
-                    const activeQueue = await Queue.find({
-                        business: q.business._id,
-                        status: { $in: ["waiting", "serving"] }
-                    })
-                        .sort({ sortOrder: 1, joinedAt: 1 })
-                        .select("_id")
-                        .lean();
-
-                    // Find where this specific queue ticket sits in the sorted list
-                    const index = activeQueue.findIndex((item: any) => item._id.toString() === q._id.toString());
-
-                    if (index !== -1) {
-                        peopleAhead = index;
-                        position = index + 1;
-                    }
-                }
-
-                return {
-                    ...q,
-                    position,
-                    peopleAhead
-                };
-            })
-        );
+        // Fetch each active business queue once, then calculate all positions in memory.
+        const businessIds = [...new Set(
+            userQueues
+                .filter((q: any) => q.status === "waiting" || q.status === "serving")
+                .map((q: any) => q.business?._id?.toString())
+                .filter(Boolean)
+        )];
+        const activeQueue = await Queue.find({
+            business: { $in: businessIds },
+            status: { $in: ["waiting", "serving"] }
+        })
+            .sort({ sortOrder: 1, joinedAt: 1 })
+            .select("_id business")
+            .lean();
+        const positions = new Map<string, { position: number; peopleAhead: number }>();
+        const byBusiness = new Map<string, typeof activeQueue>();
+        for (const item of activeQueue) {
+            const key = item.business.toString();
+            const list = byBusiness.get(key) || [];
+            list.push(item);
+            byBusiness.set(key, list);
+        }
+        for (const list of byBusiness.values()) {
+            list.forEach((item, index) => {
+                positions.set((item as any)._id.toString(), { position: index + 1, peopleAhead: index });
+            });
+        }
+        const queuesWithPosition = userQueues.map((q: any) => ({
+            ...q,
+            ...(positions.get(q._id.toString()) || { position: null, peopleAhead: 0 })
+        }));
 
         return NextResponse.json(queuesWithPosition);
     } catch (error: any) {

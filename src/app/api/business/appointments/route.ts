@@ -4,7 +4,7 @@ import Appointment from "@/models/Appointment";
 import Business from "@/models/Business";
 import Notification from "@/models/Notification";
 import User from "@/models/User";
-import { getUser } from "@/lib/auth";
+import { getUser, isSameOrigin } from "@/lib/auth";
 import { sendEmail, appointmentStatusUpdateTemplate } from "@/lib/email";
 import { emitUserEvent } from "@/lib/realtime";
 
@@ -38,6 +38,7 @@ export async function GET(req: Request) {
 export async function PATCH(req: Request) {
     try {
         await dbConnect();
+        if (!isSameOrigin(req)) return NextResponse.json({ message: "Invalid origin" }, { status: 403 });
 
         const user = await getUser();
         if (!user || user.role !== "business") {
@@ -50,21 +51,33 @@ export async function PATCH(req: Request) {
             return NextResponse.json({ message: "Business not found" }, { status: 404 });
         }
 
-        const { appointmentId, status } = await req.json();
+        const body = await req.json();
+        const appointmentId = body?.appointmentId;
+        const status = body?.status;
         const allowedStatuses = ["pending", "confirmed", "completed", "cancelled"];
 
         if (!appointmentId || !allowedStatuses.includes(status)) {
             return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
         }
 
+        const current = await Appointment.findOne({ _id: appointmentId, business: business._id }).select("status");
+        if (!current) return NextResponse.json({ message: "Appointment not found" }, { status: 404 });
+        const transitions: Record<string, string[]> = {
+            pending: ["confirmed", "cancelled"],
+            confirmed: ["completed", "cancelled"],
+        };
+        if (!transitions[current.status]?.includes(status)) {
+            return NextResponse.json({ message: "Invalid appointment status transition" }, { status: 409 });
+        }
+
         const appointment = await Appointment.findOneAndUpdate(
-            { _id: appointmentId, business: business._id },
+            { _id: appointmentId, business: business._id, status: current.status },
             { $set: { status } },
             { new: true, runValidators: true }
         ).populate('user', 'name');
 
         if (!appointment) {
-            return NextResponse.json({ message: "Appointment not found" }, { status: 404 });
+            return NextResponse.json({ message: "Appointment was updated by another request" }, { status: 409 });
         }
         emitUserEvent(String(appointment.user?._id), "appointment:changed", { appointmentId: appointment.id });
         emitUserEvent(user.id, "appointment:changed", { appointmentId: appointment.id });

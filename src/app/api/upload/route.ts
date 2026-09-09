@@ -1,18 +1,15 @@
 import { NextResponse } from "next/server";
 import cloudinary from "@/lib/cloudinary";
-import { cookies } from "next/headers";
-import jwt from "jsonwebtoken";
-import { JWT_SECRET } from "@/lib/auth";
+import { isSameOrigin, requireUser } from "@/lib/auth";
+import { getClientIp, rateLimit } from "@/lib/rateLimit";
 
 export async function POST(req: Request) {
     try {
-        // Simple auth check
-        const cookieStore = await cookies();
-        const token = cookieStore.get("token")?.value;
-        if (!token) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-
-        // Verify User
-        jwt.verify(token, JWT_SECRET) as any;
+        if (!isSameOrigin(req)) return NextResponse.json({ message: "Invalid origin" }, { status: 403 });
+        const user = await requireUser();
+        if (!user) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+        const limit = rateLimit("upload:" + user.id + ":" + getClientIp(req), 20, 15 * 60 * 1000);
+        if (!limit.allowed) return NextResponse.json({ message: "Too many uploads" }, { status: 429 });
 
         const formData = await req.formData();
         const file = formData.get("file") as File | null;

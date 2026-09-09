@@ -4,6 +4,7 @@ import User from "@/models/User";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "@/lib/auth";
+import { getClientIp, rateLimit } from "@/lib/rateLimit";
 
 export async function POST(req: Request) {
     try {
@@ -15,6 +16,13 @@ export async function POST(req: Request) {
         }
 
         const normalizedEmail = email.trim().toLowerCase();
+        const limit = rateLimit("verify:" + getClientIp(req) + ":" + normalizedEmail, 10, 15 * 60 * 1000);
+        if (!limit.allowed) {
+            return NextResponse.json(
+                { message: "Too many verification attempts" },
+                { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
+            );
+        }
 
         // 1. Get hashed OTP from the plaintext OTP
         const hashedVerificationToken = crypto.createHash('sha256').update(otp).digest('hex');

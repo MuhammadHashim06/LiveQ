@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
+import mongoose from "mongoose";
 import dbConnect from "@/lib/dbConnect";
 import Appointment from "@/models/Appointment";
 import Business from "@/models/Business";
 import Notification from "@/models/Notification";
-import { getUser } from "@/lib/auth";
+import { getUser, isSameOrigin } from "@/lib/auth";
 import { sendEmail, appointmentConfirmationTemplate } from "@/lib/email";
 import { emitUserEvent } from "@/lib/realtime";
 
@@ -15,10 +16,19 @@ export async function POST(req: Request) {
         if (!user || user.role !== "customer") {
             return NextResponse.json({ message: "Unauthorized. Please log in to book an appointment." }, { status: 401 });
         }
+        if (!isSameOrigin(req)) return NextResponse.json({ message: "Invalid origin" }, { status: 403 });
 
-        const { businessId, service, scheduledTime: scheduledTimeISO } = await req.json();
+        const body = await req.json();
+        const businessId = body?.businessId;
+        const service = body?.service;
+        const scheduledTimeISO = body?.scheduledTime;
 
-        if (!businessId || !service || typeof scheduledTimeISO !== "string") {
+        if (
+            typeof businessId !== "string" ||
+            !mongoose.isValidObjectId(businessId) ||
+            typeof service !== "string" ||
+            typeof scheduledTimeISO !== "string"
+        ) {
             return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
         }
 
@@ -27,7 +37,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: "Business not found" }, { status: 404 });
         }
 
-        const serviceName = typeof service === "string" ? service.trim() : "";
+        const serviceName = service.trim();
         if (!serviceName || !business.services.some((item: { name: string }) => item.name === serviceName)) {
             return NextResponse.json({ message: "Invalid service" }, { status: 400 });
         }
@@ -144,6 +154,9 @@ export async function POST(req: Request) {
         return NextResponse.json(appointment, { status: 201 });
     } catch (error: any) {
         console.error("Booking API Error:", error);
+        if (error?.code === 11000) {
+            return NextResponse.json({ message: "You already have an appointment at this time" }, { status: 409 });
+        }
         return NextResponse.json({ message: error.message }, { status: 500 });
     }
 }

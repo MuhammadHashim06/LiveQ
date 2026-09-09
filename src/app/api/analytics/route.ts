@@ -3,21 +3,15 @@ import dbConnect from "@/lib/dbConnect";
 import Business from "@/models/Business";
 import Queue from "@/models/Queue";
 import Appointment from "@/models/Appointment";
-import { cookies } from "next/headers";
-import jwt from "jsonwebtoken";
-import { JWT_SECRET } from "@/lib/auth";
+import { requireUser } from "@/lib/auth";
 
 export async function GET(req: Request) {
     try {
         await dbConnect();
-        const cookieStore = await cookies();
-        const token = cookieStore.get("token")?.value;
-        if (!token) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+        const user = await requireUser("business");
+        if (!user) return NextResponse.json({ message: "Business access only" }, { status: 403 });
 
-        const payload = jwt.verify(token, JWT_SECRET) as any;
-        if (payload.role !== "business") return NextResponse.json({ message: "Business access only" }, { status: 403 });
-
-        const business = await Business.findOne({ owner: payload.id });
+        const business = await Business.findOne({ owner: user.id });
         if (!business) return NextResponse.json({ message: "Business not found" }, { status: 404 });
 
         const now = new Date();

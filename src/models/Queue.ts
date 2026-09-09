@@ -30,5 +30,16 @@ const QueueSchema: Schema = new Schema(
 )
 
 QueueSchema.index({ appointment: 1 }, { unique: true, sparse: true });
+QueueSchema.index(
+  { business: 1, user: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      user: { $exists: true },
+      status: { $in: ["waiting", "serving"] }
+    }
+  }
+);
+QueueSchema.index({ business: 1, status: 1, sortOrder: 1, joinedAt: 1 });
 
 export default mongoose.models.Queue || mongoose.model<IQueue>("Queue", QueueSchema)

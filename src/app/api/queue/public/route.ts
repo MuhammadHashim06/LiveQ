@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Queue from "@/models/Queue";
 import Business from "@/models/Business";
-import { getUser } from "@/lib/auth";
+import { getUser, isSameOrigin } from "@/lib/auth";
 import NotificationModel from "@/models/Notification";
+import mongoose from "mongoose";
 import { sendEmail, queueJoinedTemplate } from "@/lib/email";
 import { emitBusinessEvent, emitUserEvent } from "@/lib/realtime";
 
@@ -16,7 +17,7 @@ export async function GET(req: Request) {
         const businessId = searchParams.get("businessId");
         const action = searchParams.get("action");
 
-        if (!businessId) {
+        if (!businessId || !mongoose.isValidObjectId(businessId)) {
             return NextResponse.json({ message: "Business ID is required" }, { status: 400 });
         }
 
@@ -34,10 +35,13 @@ export async function GET(req: Request) {
             // Also return the sorted list of people in the queue
             const queueList = await Queue.find(query)
                 .sort({ sortOrder: 1, joinedAt: 1 }) // Respect custom order first
-                .select("name status joinedAt")
+                .select("status joinedAt")
                 .lean();
 
-            return NextResponse.json({ count: queueCount, list: queueList });
+            return NextResponse.json({
+                count: queueCount,
+                list: queueList.map((item, index) => ({ ...item, name: "Customer " + (index + 1) })),
+            });
         }
 
         return NextResponse.json({ count: queueCount });
@@ -56,11 +60,12 @@ export async function POST(req: Request) {
         if (!user || user.role !== "customer") {
             return NextResponse.json({ message: "Unauthorized. Please log in to join the queue." }, { status: 401 });
         }
+        if (!isSameOrigin(req)) return NextResponse.json({ message: "Invalid origin" }, { status: 403 });
 
         const body = await req.json();
         const { businessId, customerName } = body;
 
-        if (!businessId) {
+        if (!businessId || !mongoose.isValidObjectId(businessId)) {
             return NextResponse.json({ message: "Business ID is required" }, { status: 400 });
         }
 
@@ -120,6 +125,9 @@ export async function POST(req: Request) {
 
         return NextResponse.json(newQueueItem, { status: 201 });
     } catch (error: any) {
+        if (error?.code === 11000) {
+            return NextResponse.json({ message: "You are already in this queue" }, { status: 409 });
+        }
         return NextResponse.json({ message: error.message }, { status: 500 });
     }
 }

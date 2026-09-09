@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Appointment from "@/models/Appointment";
 import Notification from "@/models/Notification";
-import { getUser } from "@/lib/auth";
+import { getUser, isSameOrigin } from "@/lib/auth";
 import { emitUserEvent } from "@/lib/realtime";
 
 export async function PATCH(req: Request) {
@@ -13,8 +13,10 @@ export async function PATCH(req: Request) {
         if (!user) {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
         }
+        if (!isSameOrigin(req)) return NextResponse.json({ message: "Invalid origin" }, { status: 403 });
 
-        const { appointmentId } = await req.json();
+        const body = await req.json();
+        const appointmentId = body?.appointmentId;
 
         if (!appointmentId) {
             return NextResponse.json({ message: "Appointment ID is required" }, { status: 400 });

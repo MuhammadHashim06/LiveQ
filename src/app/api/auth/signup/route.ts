@@ -4,6 +4,7 @@ import User from "@/models/User";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { sendEmail, verifyEmailTemplate } from "@/lib/email";
+import { getClientIp, rateLimit } from "@/lib/rateLimit";
 
 export async function POST(req: Request) {
     try {
@@ -20,6 +21,14 @@ export async function POST(req: Request) {
 
         if (role !== "customer" && role !== "business") {
             return NextResponse.json({ message: "Invalid role" }, { status: 400 });
+        }
+
+        const limit = rateLimit("signup:" + getClientIp(req), 5, 15 * 60 * 1000);
+        if (!limit.allowed) {
+            return NextResponse.json(
+                { message: "Too many signup attempts" },
+                { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
+            );
         }
 
         const normalizedEmail = email.trim().toLowerCase();

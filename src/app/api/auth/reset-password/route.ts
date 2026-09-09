@@ -2,14 +2,19 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import User from "@/models/User";
 import crypto from "crypto";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
 export async function POST(req: Request) {
     try {
         await dbConnect();
         const { token, newPassword } = await req.json();
 
-        if (!token || !newPassword) {
+        if (
+            typeof token !== "string" ||
+            typeof newPassword !== "string" ||
+            newPassword.length < 8 ||
+            newPassword.length > 128
+        ) {
             return NextResponse.json({ message: "Token and new password are required" }, { status: 400 });
         }
 

@@ -75,4 +75,6 @@ const BusinessSchema: Schema = new Schema(
   { timestamps: true }
 )
 
+BusinessSchema.index({ owner: 1 }, { unique: true });
+
 export default mongoose.models.Business || mongoose.model<IBusiness>("Business", BusinessSchema)

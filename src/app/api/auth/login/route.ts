@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { sendEmail, verifyEmailTemplate } from "@/lib/email";
 import { JWT_SECRET } from "@/lib/auth";
+import { getClientIp, rateLimit } from "@/lib/rateLimit";
 
 export async function POST(req: Request) {
     try {
@@ -16,6 +17,13 @@ export async function POST(req: Request) {
         }
 
         const normalizedEmail = email.trim().toLowerCase();
+        const limit = rateLimit("login:" + getClientIp(req) + ":" + normalizedEmail, 10, 15 * 60 * 1000);
+        if (!limit.allowed) {
+            return NextResponse.json(
+                { message: "Too many login attempts" },
+                { status: 429, headers: { "Retry-After": String(limit.retryAfterSeconds) } }
+            );
+        }
         const user = await User.findOne({ email: normalizedEmail });
         if (!user) {
             return NextResponse.json({ message: "Invalid credentials" }, { status: 401 });

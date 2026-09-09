@@ -1,31 +1,15 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Business from "@/models/Business";
-import { cookies } from "next/headers";
-import jwt from "jsonwebtoken";
-import { JWT_SECRET } from "@/lib/auth";
+import { requireUser } from "@/lib/auth";
 
 export async function GET() {
     try {
         console.log("Admin Businesses API called");
         await dbConnect();
 
-        const cookieStore = await cookies();
-        const token = cookieStore.get("token")?.value;
-
-        if (!token) {
-            console.log("No token found in cookies");
-            return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-        }
-
-        const payload = jwt.verify(token, JWT_SECRET) as jwt.JwtPayload;
-
-        console.log("Token verified. Role:", payload.role);
-
-        if (payload.role !== "admin") {
-            console.log("Forbidden access for role:", payload.role);
-            return NextResponse.json({ message: "Forbidden: Admin access only" }, { status: 403 });
-        }
+        const user = await requireUser("admin");
+        if (!user) return NextResponse.json({ message: "Forbidden: Admin access only" }, { status: 403 });
 
         const businesses = await Business.find({}).sort({ createdAt: -1 });
         console.log(`Found ${businesses.length} businesses`);

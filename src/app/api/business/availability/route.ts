@@ -1,21 +1,16 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Business from "@/models/Business";
-import { cookies } from "next/headers";
-import jwt from "jsonwebtoken";
-import { JWT_SECRET } from "@/lib/auth";
+import { isSameOrigin, requireUser } from "@/lib/auth";
+import { validateAvailability } from "@/lib/businessValidation";
 
 export async function GET(req: Request) {
     try {
         await dbConnect();
-        const cookieStore = await cookies();
-        const token = cookieStore.get("token")?.value;
-        if (!token) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+        const user = await requireUser("business");
+        if (!user) return NextResponse.json({ message: "Business access only" }, { status: 403 });
 
-        const payload = jwt.verify(token, JWT_SECRET) as any;
-        if (payload.role !== "business") return NextResponse.json({ message: "Business access only" }, { status: 403 });
-
-        const business = await Business.findOne({ owner: payload.id });
+        const business = await Business.findOne({ owner: user.id });
         if (!business) return NextResponse.json({ message: "Business not found" }, { status: 404 });
 
         return NextResponse.json(business.availability || []);
@@ -28,22 +23,17 @@ export async function GET(req: Request) {
 export async function PUT(req: Request) {
     try {
         await dbConnect();
-        const cookieStore = await cookies();
-        const token = cookieStore.get("token")?.value;
-        if (!token) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-
-        const payload = jwt.verify(token, JWT_SECRET) as any;
-        if (payload.role !== "business") return NextResponse.json({ message: "Business access only" }, { status: 403 });
+        if (!isSameOrigin(req)) return NextResponse.json({ message: "Invalid origin" }, { status: 403 });
+        const user = await requireUser("business");
+        if (!user) return NextResponse.json({ message: "Business access only" }, { status: 403 });
         const body = await req.json();
 
-        // Expect body to be the full array of availability objects
-        if (!Array.isArray(body)) {
-            return NextResponse.json({ message: "Invalid payload format. Expected array." }, { status: 400 });
-        }
+        const validated = validateAvailability(body);
+        if (validated.error) return NextResponse.json({ message: validated.error }, { status: 400 });
 
         const business = await Business.findOneAndUpdate(
-            { owner: payload.id },
-            { $set: { availability: body } },
+            { owner: user.id },
+            { $set: { availability: validated.value } },
             { new: true }
         );
 

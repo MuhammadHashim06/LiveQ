@@ -1,21 +1,12 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Business from "@/models/Business";
-import { cookies } from "next/headers";
-import jwt from "jsonwebtoken";
-import { JWT_SECRET } from "@/lib/auth";
+import { isSameOrigin, requireUser } from "@/lib/auth";
+import { validateService } from "@/lib/businessValidation";
 
 async function getBusinessForOwner() {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value;
-    if (!token) return null;
-    try {
-        const payload = jwt.verify(token, JWT_SECRET) as any;
-        if (payload.role !== "business") return null;
-        return await Business.findOne({ owner: payload.id });
-    } catch {
-        return null;
-    }
+    const user = await requireUser("business");
+    return user ? Business.findOne({ owner: user.id }) : null;
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -25,16 +16,16 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         if (!business) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
         const { id: serviceId } = await params;
-        const { name, price, duration, description } = await req.json();
+        if (!isSameOrigin(req)) return NextResponse.json({ message: "Invalid origin" }, { status: 403 });
+        const body = await req.json();
+        const validated = validateService(body, true);
+        if (validated.error) return NextResponse.json({ message: validated.error }, { status: 400 });
 
         const service = business.services.find((s: any) => s._id.toString() === serviceId);
         if (!service) return NextResponse.json({ message: "Service not found" }, { status: 404 });
 
         // Update only provided fields
-        if (name !== undefined) service.name = name;
-        if (price !== undefined) service.price = price;
-        if (duration !== undefined) service.duration = duration;
-        if (description !== undefined) service.description = description;
+        Object.assign(service, validated.value);
 
         await business.save();
 
@@ -51,12 +42,17 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
         const business = await getBusinessForOwner();
         if (!business) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
+        if (!isSameOrigin(req)) return NextResponse.json({ message: "Invalid origin" }, { status: 403 });
         const serviceId = (await params).id;
+        const before = business.services.length;
 
         // Filter out the service with the matching _id
         business.services = business.services.filter(
             (service: any) => service._id.toString() !== serviceId
         );
+        if (business.services.length === before) {
+            return NextResponse.json({ message: "Service not found" }, { status: 404 });
+        }
 
         await business.save();
 
