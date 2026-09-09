@@ -12,6 +12,7 @@ import {
     Bell,
     Search
 } from "lucide-react"
+import { logout } from "@/lib/logout"
 
 const navItems = [
     { label: "Overview", href: "/dashboard/admin", icon: LayoutDashboard },
@@ -27,7 +28,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     const handleLogout = async () => {
         try {
-            await fetch("/api/auth/logout", { method: "POST" })
+            await logout()
             router.push("/login")
         } catch (error) {
             console.error("Logout failed:", error)

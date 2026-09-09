@@ -3,50 +3,14 @@
 import { useState, useEffect, useRef } from 'react'
 import { Bell, Check } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useRealtime } from '@/lib/useRealtime'
-
-interface Notification {
-    _id: string
-    title: string
-    message: string
-    read: boolean
-    link?: string
-    createdAt: string
-}
+import { useNotifications } from '@/lib/useNotifications'
+import type { NotificationItem } from '@/lib/useNotifications'
 
 export default function NotificationBell() {
-    const [notifications, setNotifications] = useState<Notification[]>([])
     const [isOpen, setIsOpen] = useState(false)
-    const [loading, setLoading] = useState(true)
     const dropdownRef = useRef<HTMLDivElement>(null)
     const router = useRouter()
-
-    const fetchNotifications = async () => {
-        try {
-            const res = await fetch('/api/notifications')
-            if (res.ok) {
-                const data = await res.json()
-                setNotifications(data)
-            }
-        } catch (error) {
-            console.error(error)
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    useEffect(() => {
-        fetchNotifications()
-
-        // Slow fallback for reconnects; normal updates arrive over Socket.IO.
-        const interval = setInterval(() => {
-            fetchNotifications()
-        }, 30000)
-
-        return () => clearInterval(interval)
-    }, [])
-
-    useRealtime('notification:changed', fetchNotifications)
+    const { notifications, loading, markAllAsRead, markAsRead } = useNotifications()
 
     useEffect(() => {
         // Close dropdown when clicking outside
@@ -61,25 +25,19 @@ export default function NotificationBell() {
 
     const handleMarkAllAsRead = async () => {
         try {
-            const res = await fetch('/api/notifications', { method: 'PATCH' })
-            if (res.ok) {
-                setNotifications(prev => prev.map(n => ({ ...n, read: true })))
-            }
+            await markAllAsRead()
         } catch (error) {
             console.error(error)
         }
     }
 
-    const handleNotificationClick = async (notif: Notification) => {
+    const handleNotificationClick = async (notif: NotificationItem) => {
         setIsOpen(false)
 
         // Mark as read if it's unread
         if (!notif.read) {
             try {
-                await fetch(`/api/notifications/${notif._id}`, { method: 'PATCH' })
-                setNotifications(prev => prev.map(n =>
-                    n._id === notif._id ? { ...n, read: true } : n
-                ))
+                await markAsRead(notif._id)
             } catch (error) {
                 console.error(error)
             }

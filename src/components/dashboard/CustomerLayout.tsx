@@ -118,7 +118,7 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { Calendar, Search, User, Clock, Video, LogOut } from "lucide-react"
 import NotificationBell from './NotificationBell'
-import { disconnectSocket } from '@/lib/socket-client'
+import { logout } from '@/lib/logout'
 
 const navItems = [
   { label: "Book", href: "/dashboard/customer/book", icon: Calendar },
@@ -134,12 +134,10 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
 
   const handleLogout = async () => {
     try {
-      await fetch("/api/auth/logout", { method: "POST" })
-      disconnectSocket()
+      await logout()
       router.push("/login")
     } catch (error) {
       console.error("Logout failed:", error)
-      disconnectSocket()
       router.push("/login")
     }
   }

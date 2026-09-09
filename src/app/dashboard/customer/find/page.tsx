@@ -59,6 +59,9 @@ import toast from 'react-hot-toast'
 import Link from 'next/link'
 import { useRealtime } from '@/lib/useRealtime'
 import MapFallback from '@/components/ui/MapFallback'
+import { useBusinesses } from '@/lib/useBusinesses'
+import type { BusinessSummary } from '@/lib/useBusinesses'
+import { apiRequest, getApiErrorMessage } from '@/lib/apiClient'
 
 // Haversine distance formula to calculate distance between two lat/lng points in km
 function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -85,25 +88,11 @@ const containerStyle = {
 
 const mapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
 
-type Business = {
-  _id: string
-  name: string
-  category: string
-  address?: string
-  lat: number
-  lng: number
-  distance?: number // Distance from user if calculated
-  stats?: {
-    rating: number;
-    totalCustomers: number;
-  }
-}
-
 export default function FindBusinessPage() {
-  const [businesses, setBusinesses] = useState<Business[]>([])
+  const { businesses } = useBusinesses()
   const [searchQuery, setSearchQuery] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('All')
-  const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null)
+  const [selectedBusiness, setSelectedBusiness] = useState<BusinessSummary | null>(null)
 
   // Advanced Features State
   const [userLocation, setUserLocation] = useState<{ lat: number, lng: number } | null>(null)
@@ -118,21 +107,6 @@ export default function FindBusinessPage() {
 
   const defaultCenter = { lat: 31.5204, lng: 74.3587 }
 
-  useEffect(() => {
-    const fetchBusinesses = async () => {
-      try {
-        const res = await fetch('/api/businesses')
-        if (res.ok) {
-          const data = await res.json()
-          setBusinesses(data)
-        }
-      } catch (err) {
-        console.error('Error fetching businesses:', err)
-      }
-    }
-    fetchBusinesses()
-  }, [])
-
   // Fetch queue count when a business is selected
   useEffect(() => {
     const fetchQueueCount = async () => {
@@ -142,13 +116,10 @@ export default function FindBusinessPage() {
         return
       }
       try {
-        const res = await fetch(`/api/queue/public?businessId=${selectedBusiness._id}`)
-        if (res.ok) {
-          const data = await res.json()
-          setQueueCount(data.count)
-        }
-      } catch (err) {
-        console.error('Failed to fetch queue count', err)
+        const data = await apiRequest<{ count: number }>(`/api/queue/public?businessId=${selectedBusiness._id}`)
+        setQueueCount(data.count)
+      } catch (error) {
+        console.error('Failed to fetch queue count', error)
       }
     }
     fetchQueueCount()
@@ -156,9 +127,8 @@ export default function FindBusinessPage() {
 
   useRealtime('queue:changed', () => {
     if (!selectedBusiness) return
-    void fetch(`/api/queue/public?businessId=${selectedBusiness._id}`)
-      .then(res => res.ok ? res.json() : null)
-      .then(data => { if (data) setQueueCount(data.count) })
+    void apiRequest<{ count: number }>(`/api/queue/public?businessId=${selectedBusiness._id}`)
+      .then(data => setQueueCount(data.count))
       .catch(() => { })
   }, selectedBusiness?._id)
 
@@ -205,27 +175,21 @@ export default function FindBusinessPage() {
 
     setIsJoiningQueue(true)
     try {
-      const res = await fetch('/api/queue/public', {
+      await apiRequest('/api/queue/public', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           businessId: selectedBusiness._id,
           customerName: bookingName || undefined
         })
       })
 
-      if (res.ok) {
-        toast.success(`You have successfully joined the queue at ${selectedBusiness.name}!`)
-        setShowBookingForm(false)
-        setBookingName('')
-        // Refresh the local queue count estimate
-        setQueueCount(prev => (prev !== null ? prev + 1 : 1))
-      } else {
-        const data = await res.json()
-        toast.error(data.message || 'Failed to join queue')
-      }
-    } catch (err) {
-      toast.error('An error occurred while joining the queue')
+      toast.success(`You have successfully joined the queue at ${selectedBusiness.name}!`)
+      setShowBookingForm(false)
+      setBookingName('')
+      // Refresh the local queue count estimate
+      setQueueCount(prev => (prev !== null ? prev + 1 : 1))
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'An error occurred while joining the queue'))
     } finally {
       setIsJoiningQueue(false)
     }

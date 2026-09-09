@@ -1,12 +1,14 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { GoogleMap, LoadScript, Marker, InfoWindow } from '@react-google-maps/api'
 import { Search, MapPin, Building2, Navigation2, Star, Users, Calendar, Clock, Check } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import MapFallback from '@/components/ui/MapFallback'
+import { useBusinesses } from '@/lib/useBusinesses'
+import type { BusinessSummary } from '@/lib/useBusinesses'
 
 // Haversine distance formula to calculate distance between two lat/lng points in km
 function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -33,32 +35,12 @@ const containerStyle = {
 
 const mapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
 
-type Business = {
-  _id: string
-  name: string
-  category: string
-  address?: string
-  lat: number
-  lng: number
-  distance?: number // Distance from user if calculated
-  stats?: {
-    rating: number;
-    totalCustomers: number;
-  }
-  services?: {
-    _id: string;
-    name: string;
-    price: number;
-    duration: number;
-  }[]
-}
-
 export default function BookAppointmentPage() {
   const router = useRouter()
-  const [businesses, setBusinesses] = useState<Business[]>([])
+  const { businesses } = useBusinesses()
   const [searchQuery, setSearchQuery] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('All')
-  const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null)
+  const [selectedBusiness, setSelectedBusiness] = useState<BusinessSummary | null>(null)
 
   // Advanced Features State
   const [userLocation, setUserLocation] = useState<{ lat: number, lng: number } | null>(null)
@@ -71,21 +53,6 @@ export default function BookAppointmentPage() {
   const [isBooking, setIsBooking] = useState(false)
 
   const defaultCenter = { lat: 31.5204, lng: 74.3587 }
-
-  useEffect(() => {
-    const fetchBusinesses = async () => {
-      try {
-        const res = await fetch('/api/businesses')
-        if (res.ok) {
-          const data = await res.json()
-          setBusinesses(data)
-        }
-      } catch (err) {
-        console.error('Error fetching businesses:', err)
-      }
-    }
-    fetchBusinesses()
-  }, [])
 
   // Geolocation for "Sort by Nearest"
   const handleSortByNearest = () => {

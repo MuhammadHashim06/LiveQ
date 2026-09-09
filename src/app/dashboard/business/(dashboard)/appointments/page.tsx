@@ -1,61 +1,21 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Calendar as CalendarIcon, Clock, User, Check, X, Filter } from "lucide-react"
 import toast from "react-hot-toast"
-import { useRealtime } from "@/lib/useRealtime"
-
-interface Appointment {
-  _id: string
-  user: {
-    name: string
-    email: string
-  }
-  serviceName: string
-  scheduledTime: string
-  status: "pending" | "confirmed" | "completed" | "cancelled"
-}
+import { getApiErrorMessage } from "@/lib/apiClient"
+import { useBusinessAppointments } from "@/lib/useBusinessAppointments"
 
 export default function BusinessAppointmentsPage() {
-  const [appointments, setAppointments] = useState<Appointment[]>([])
-  const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState("all")
+  const { appointments, loading, updateStatus } = useBusinessAppointments()
 
-  const fetchAppointments = async () => {
+  const handleUpdateStatus = async (id: string, status: string) => {
     try {
-      const res = await fetch("/api/business/appointments")
-      if (res.ok) {
-        const data = await res.json()
-        setAppointments(data)
-      }
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useRealtime("appointment:changed", () => { void fetchAppointments() })
-
-  useEffect(() => {
-    fetchAppointments()
-    const interval = setInterval(() => { void fetchAppointments() }, 30000)
-    return () => clearInterval(interval)
-  }, [])
-
-  const updateStatus = async (id: string, status: string) => {
-    try {
-      const res = await fetch("/api/business/appointments", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ appointmentId: id, status }),
-      })
-      if (res.ok) {
-        toast.success(`Appointment ${status}`)
-        fetchAppointments()
-      }
-    } catch (err) {
-      toast.error("Failed to update status")
+      await updateStatus(id, status)
+      toast.success(`Appointment ${status}`)
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to update status"))
     }
   }
 
@@ -133,7 +93,7 @@ export default function BusinessAppointmentsPage() {
               <div className="flex gap-2 font-bold">
                 {app.status === 'pending' && (
                   <button
-                    onClick={() => updateStatus(app._id, 'confirmed')}
+                    onClick={() => handleUpdateStatus(app._id, 'confirmed')}
                     className="flex-1 bg-green-600 text-white py-2.5 rounded-xl hover:bg-green-700 transition flex items-center justify-center gap-2"
                   >
                     <Check className="w-4 h-4" /> Confirm
@@ -141,7 +101,7 @@ export default function BusinessAppointmentsPage() {
                 )}
                 {app.status === 'confirmed' && (
                   <button
-                    onClick={() => updateStatus(app._id, 'completed')}
+                    onClick={() => handleUpdateStatus(app._id, 'completed')}
                     className="flex-1 bg-red-600 text-white py-2.5 rounded-xl hover:bg-red-700 transition flex items-center justify-center gap-2"
                   >
                     <Check className="w-4 h-4" /> Complete
@@ -149,7 +109,7 @@ export default function BusinessAppointmentsPage() {
                 )}
                 {(app.status === 'pending' || app.status === 'confirmed') && (
                   <button
-                    onClick={() => updateStatus(app._id, 'cancelled')}
+                    onClick={() => handleUpdateStatus(app._id, 'cancelled')}
                     className="px-4 py-2.5 bg-gray-100 text-gray-500 rounded-xl hover:bg-red-50 hover:text-red-700 transition"
                   >
                     <X className="w-4 h-4" />
